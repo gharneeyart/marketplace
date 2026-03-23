@@ -28,6 +28,30 @@
                 },
                 {
                   "symbol": "XLM"
+                },
+                {
+                  "vec": [
+                    {
+                      "map": [
+                        {
+                          "key": {
+                            "symbol": "address"
+                          },
+                          "val": {
+                            "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+                          }
+                        },
+                        {
+                          "key": {
+                            "symbol": "percentage"
+                          },
+                          "val": {
+                            "u32": 100
+                          }
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             }
@@ -190,6 +214,35 @@
                           "hi": 0,
                           "lo": 10000000
                         }
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "recipients"
+                      },
+                      "val": {
+                        "vec": [
+                          {
+                            "map": [
+                              {
+                                "key": {
+                                  "symbol": "address"
+                                },
+                                "val": {
+                                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+                                }
+                              },
+                              {
+                                "key": {
+                                  "symbol": "percentage"
+                                },
+                                "val": {
+                                  "u32": 100
+                                }
+                              }
+                            ]
+                          }
+                        ]
                       }
                     },
                     {

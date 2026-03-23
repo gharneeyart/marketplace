@@ -49,9 +49,11 @@ pub fn increment_listing_count(env: &Env) -> u64 {
     env.storage()
         .persistent()
         .set(&DataKey::ListingCount, &count);
-    env.storage()
-        .persistent()
-        .extend_ttl(&DataKey::ListingCount, LEDGER_TTL_THRESHOLD, LEDGER_TTL_BUMP);
+    env.storage().persistent().extend_ttl(
+        &DataKey::ListingCount,
+        LEDGER_TTL_THRESHOLD,
+        LEDGER_TTL_BUMP,
+    );
     count
 }
 

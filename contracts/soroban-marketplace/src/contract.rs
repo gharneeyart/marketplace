@@ -4,17 +4,16 @@
 
 #[allow(unused_imports)]
 use soroban_sdk::{
-    contract, contractimpl, log, panic_with_error,
-    token::Client as TokenClient,
-    Address, Bytes, Env, Symbol, Vec,
+    contract, contractimpl, log, panic_with_error, token::Client as TokenClient, Address, Bytes,
+    Env, Symbol, Vec,
 };
 
 use crate::{
     storage::{
-        add_artist_listing_id, get_artist_listing_ids, get_listing_count,
-        increment_listing_count, load_listing, save_listing,
+        add_artist_listing_id, get_artist_listing_ids, get_listing_count, increment_listing_count,
+        load_listing, save_listing,
     },
-    types::{Listing, ListingStatus, MarketplaceError},
+    types::{Listing, ListingStatus, MarketplaceError, Recipient},
 };
 
 // ────────────────────────────────────────────────────────────
@@ -36,6 +35,7 @@ impl MarketplaceContract {
         metadata_cid: Bytes,
         price: i128,
         currency: Symbol,
+        recipients: Vec<Recipient>,
     ) -> u64 {
         // Require the artist to have authorised this call.
         artist.require_auth();
@@ -48,6 +48,21 @@ impl MarketplaceContract {
             panic_with_error!(&env, MarketplaceError::InvalidPrice);
         }
 
+        let recipients_len = recipients.len();
+        if recipients_len == 0 || recipients_len > 4 {
+            panic_with_error!(&env, MarketplaceError::TooManyRecipients);
+        }
+
+        let mut total_percentage = 0;
+        for i in 0..recipients_len {
+            let recipient = recipients.get(i).unwrap();
+            total_percentage += recipient.percentage;
+        }
+
+        if total_percentage != 100 {
+            panic_with_error!(&env, MarketplaceError::InvalidSplit);
+        }
+
         let listing_id = increment_listing_count(&env);
 
         let listing = Listing {
@@ -56,6 +71,7 @@ impl MarketplaceContract {
             metadata_cid,
             price,
             currency,
+            recipients,
             status: ListingStatus::Active,
             owner: None,
             created_at: env.ledger().sequence(),
@@ -64,7 +80,12 @@ impl MarketplaceContract {
         save_listing(&env, &listing);
         add_artist_listing_id(&env, &artist, listing_id);
 
-        log!(&env, "Listing created: id={}, artist={}", listing_id, artist);
+        log!(
+            &env,
+            "Listing created: id={}, artist={}",
+            listing_id,
+            artist
+        );
 
         listing_id
     }
@@ -96,9 +117,27 @@ impl MarketplaceContract {
         #[cfg(not(test))]
         {
             let token = TokenClient::new(&env, &Self::xlm_token_address(&env));
-
             token.transfer(&buyer, &env.current_contract_address(), &listing.price);
-            token.transfer(&env.current_contract_address(), &listing.artist, &listing.price);
+
+            let recipients_len = listing.recipients.len();
+            let mut distributed_so_far: i128 = 0;
+
+            for i in 0..recipients_len {
+                let recipient = listing.recipients.get(i).unwrap();
+                let amount_to_transfer = if i == recipients_len - 1 {
+                    // Fractional rounding security: exact remainder to the final recipient directly.
+                    listing.price - distributed_so_far
+                } else {
+                    (listing.price * recipient.percentage as i128) / 100
+                };
+
+                token.transfer(
+                    &env.current_contract_address(),
+                    &recipient.address,
+                    &amount_to_transfer,
+                );
+                distributed_so_far += amount_to_transfer;
+            }
         }
 
         // Update listing state.
@@ -168,11 +207,9 @@ impl MarketplaceContract {
     /// every Stellar network (both testnet and mainnet).
     #[cfg(not(test))]
     fn xlm_token_address(env: &Env) -> Address {
-        Address::from_string_bytes(
-            &soroban_sdk::Bytes::from_slice(
-                env,
-                b"CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
-            ),
-        )
+        Address::from_string_bytes(&soroban_sdk::Bytes::from_slice(
+            env,
+            b"CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+        ))
     }
 }

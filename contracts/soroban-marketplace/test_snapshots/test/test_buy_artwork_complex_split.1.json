@@ -1,6 +1,6 @@
 {
   "generators": {
-    "address": 3,
+    "address": 5,
     "nonce": 0
   },
   "auth": [
@@ -23,7 +23,7 @@
                 {
                   "i128": {
                     "hi": 0,
-                    "lo": 1000000
+                    "lo": 10000000
                   }
                 },
                 {
@@ -46,7 +46,47 @@
                             "symbol": "percentage"
                           },
                           "val": {
-                            "u32": 100
+                            "u32": 33
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "map": [
+                        {
+                          "key": {
+                            "symbol": "address"
+                          },
+                          "val": {
+                            "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                          }
+                        },
+                        {
+                          "key": {
+                            "symbol": "percentage"
+                          },
+                          "val": {
+                            "u32": 33
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "map": [
+                        {
+                          "key": {
+                            "symbol": "address"
+                          },
+                          "val": {
+                            "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                          }
+                        },
+                        {
+                          "key": {
+                            "symbol": "percentage"
+                          },
+                          "val": {
+                            "u32": 34
                           }
                         }
                       ]
@@ -62,51 +102,18 @@
     ],
     [
       [
-        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
         {
           "function": {
             "contract_fn": {
               "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
-              "function_name": "create_listing",
+              "function_name": "buy_artwork",
               "args": [
                 {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "bytes": "516d74657374"
-                },
-                {
-                  "i128": {
-                    "hi": 0,
-                    "lo": 2000000
-                  }
-                },
-                {
-                  "symbol": "XLM"
-                },
-                {
-                  "vec": [
-                    {
-                      "map": [
-                        {
-                          "key": {
-                            "symbol": "address"
-                          },
-                          "val": {
-                            "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "percentage"
-                          },
-                          "val": {
-                            "u32": 100
-                          }
-                        }
-                      ]
-                    }
-                  ]
+                  "u64": 1
                 }
               ]
             }
@@ -114,63 +121,7 @@
           "sub_invocations": []
         }
       ]
-    ],
-    [
-      [
-        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
-        {
-          "function": {
-            "contract_fn": {
-              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
-              "function_name": "create_listing",
-              "args": [
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
-                },
-                {
-                  "bytes": "516d74657374"
-                },
-                {
-                  "i128": {
-                    "hi": 0,
-                    "lo": 3000000
-                  }
-                },
-                {
-                  "symbol": "XLM"
-                },
-                {
-                  "vec": [
-                    {
-                      "map": [
-                        {
-                          "key": {
-                            "symbol": "address"
-                          },
-                          "val": {
-                            "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "percentage"
-                          },
-                          "val": {
-                            "u32": 100
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          "sub_invocations": []
-        }
-      ]
-    ],
-    []
+    ]
   ],
   "ledger": {
     "protocol_version": 22,
@@ -221,12 +172,6 @@
                   "vec": [
                     {
                       "u64": 1
-                    },
-                    {
-                      "u64": 2
-                    },
-                    {
-                      "u64": 3
                     }
                   ]
                 }
@@ -318,7 +263,9 @@
                       "key": {
                         "symbol": "owner"
                       },
-                      "val": "void"
+                      "val": {
+                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                      }
                     },
                     {
                       "key": {
@@ -327,7 +274,7 @@
                       "val": {
                         "i128": {
                           "hi": 0,
-                          "lo": 1000000
+                          "lo": 10000000
                         }
                       }
                     },
@@ -352,135 +299,11 @@
                                   "symbol": "percentage"
                                 },
                                 "val": {
-                                  "u32": 100
+                                  "u32": 33
                                 }
                               }
                             ]
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "status"
-                      },
-                      "val": {
-                        "vec": [
-                          {
-                            "symbol": "Active"
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              }
-            },
-            "ext": "v0"
-          },
-          432000
-        ]
-      ],
-      [
-        {
-          "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
-            "key": {
-              "vec": [
-                {
-                  "symbol": "Listing"
-                },
-                {
-                  "u64": 2
-                }
-              ]
-            },
-            "durability": "persistent"
-          }
-        },
-        [
-          {
-            "last_modified_ledger_seq": 0,
-            "data": {
-              "contract_data": {
-                "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
-                "key": {
-                  "vec": [
-                    {
-                      "symbol": "Listing"
-                    },
-                    {
-                      "u64": 2
-                    }
-                  ]
-                },
-                "durability": "persistent",
-                "val": {
-                  "map": [
-                    {
-                      "key": {
-                        "symbol": "artist"
-                      },
-                      "val": {
-                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "created_at"
-                      },
-                      "val": {
-                        "u32": 0
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "currency"
-                      },
-                      "val": {
-                        "symbol": "XLM"
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "listing_id"
-                      },
-                      "val": {
-                        "u64": 2
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "metadata_cid"
-                      },
-                      "val": {
-                        "bytes": "516d74657374"
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "owner"
-                      },
-                      "val": "void"
-                    },
-                    {
-                      "key": {
-                        "symbol": "price"
-                      },
-                      "val": {
-                        "i128": {
-                          "hi": 0,
-                          "lo": 2000000
-                        }
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "recipients"
-                      },
-                      "val": {
-                        "vec": [
+                          },
                           {
                             "map": [
                               {
@@ -488,7 +311,7 @@
                                   "symbol": "address"
                                 },
                                 "val": {
-                                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+                                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
                                 }
                               },
                               {
@@ -496,135 +319,11 @@
                                   "symbol": "percentage"
                                 },
                                 "val": {
-                                  "u32": 100
+                                  "u32": 33
                                 }
                               }
                             ]
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "status"
-                      },
-                      "val": {
-                        "vec": [
-                          {
-                            "symbol": "Active"
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              }
-            },
-            "ext": "v0"
-          },
-          432000
-        ]
-      ],
-      [
-        {
-          "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
-            "key": {
-              "vec": [
-                {
-                  "symbol": "Listing"
-                },
-                {
-                  "u64": 3
-                }
-              ]
-            },
-            "durability": "persistent"
-          }
-        },
-        [
-          {
-            "last_modified_ledger_seq": 0,
-            "data": {
-              "contract_data": {
-                "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
-                "key": {
-                  "vec": [
-                    {
-                      "symbol": "Listing"
-                    },
-                    {
-                      "u64": 3
-                    }
-                  ]
-                },
-                "durability": "persistent",
-                "val": {
-                  "map": [
-                    {
-                      "key": {
-                        "symbol": "artist"
-                      },
-                      "val": {
-                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "created_at"
-                      },
-                      "val": {
-                        "u32": 0
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "currency"
-                      },
-                      "val": {
-                        "symbol": "XLM"
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "listing_id"
-                      },
-                      "val": {
-                        "u64": 3
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "metadata_cid"
-                      },
-                      "val": {
-                        "bytes": "516d74657374"
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "owner"
-                      },
-                      "val": "void"
-                    },
-                    {
-                      "key": {
-                        "symbol": "price"
-                      },
-                      "val": {
-                        "i128": {
-                          "hi": 0,
-                          "lo": 3000000
-                        }
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "recipients"
-                      },
-                      "val": {
-                        "vec": [
+                          },
                           {
                             "map": [
                               {
@@ -632,7 +331,7 @@
                                   "symbol": "address"
                                 },
                                 "val": {
-                                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+                                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
                                 }
                               },
                               {
@@ -640,7 +339,7 @@
                                   "symbol": "percentage"
                                 },
                                 "val": {
-                                  "u32": 100
+                                  "u32": 34
                                 }
                               }
                             ]
@@ -655,7 +354,7 @@
                       "val": {
                         "vec": [
                           {
-                            "symbol": "Active"
+                            "symbol": "Sold"
                           }
                         ]
                       }
@@ -699,7 +398,7 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "u64": 3
+                  "u64": 1
                 }
               }
             },
@@ -776,40 +475,7 @@
       [
         {
           "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
-            "key": {
-              "ledger_key_nonce": {
-                "nonce": 1033654523790656264
-              }
-            },
-            "durability": "temporary"
-          }
-        },
-        [
-          {
-            "last_modified_ledger_seq": 0,
-            "data": {
-              "contract_data": {
-                "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
-                "key": {
-                  "ledger_key_nonce": {
-                    "nonce": 1033654523790656264
-                  }
-                },
-                "durability": "temporary",
-                "val": "void"
-              }
-            },
-            "ext": "v0"
-          },
-          6311999
-        ]
-      ],
-      [
-        {
-          "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
             "key": {
               "ledger_key_nonce": {
                 "nonce": 5541220902715666415
@@ -824,7 +490,7 @@
             "data": {
               "contract_data": {
                 "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
                 "key": {
                   "ledger_key_nonce": {
                     "nonce": 5541220902715666415
