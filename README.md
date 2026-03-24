@@ -93,3 +93,39 @@ Open [http://localhost:3000](http://localhost:3000).
 - Auction / bidding contract
 - Analytics dashboard
 - Mobile wallet support (LOBSTR, xBull)
+
+
+## Future Plan (V2)
+
+### 1) Split into dedicated repositories
+
+To scale development and deployment, this monorepo will be split into focused repos:
+
+- `afristore-frontend`
+    - Next.js app, wallet UX, listing/discovery pages, creator dashboard
+- `afristore-backend`
+    - Indexer, API, search, analytics, notifications, admin services
+- `afristore-contracts`
+    - Soroban marketplace, auction, royalty, and protocol-level smart contracts
+
+### 2) Marketplace evolution
+
+- Move from “create NFT in marketplace” to “list existing NFT for sale”
+- Enable clean primary and secondary sales flow
+- Preserve `original_creator` + royalty rules across all resales
+- Keep protocol fee and payout splitting fully on-chain
+
+### 3) Launchpad creation
+
+The launchpad will support creator-first primary drops:
+
+- Collection/project setup for artists and brands
+- Configurable drop mechanics (fixed price, timed drop, allowlist)
+- Primary mint + instant listing pipeline
+- Launch metrics dashboard (mints, volume, conversion)
+- Shared royalty and treasury configuration with marketplace
+
+### 4) Supporting improvements
+
+- PostgreSQL event indexer for fast queries and search
+- Auction / bidding contracts and offer workflows

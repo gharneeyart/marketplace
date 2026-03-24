@@ -23,3 +23,6 @@ Thumbs.db
 # WASM / build outputs
 *.wasm
 *.optimized.wasm
+
+# Generated test snapshots
+**/test_snapshots/
