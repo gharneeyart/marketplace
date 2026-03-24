@@ -63,19 +63,18 @@ use soroban_sdk::Map;
 
 #[allow(unused_imports)]
 use soroban_sdk::{
-    contract, contractimpl, panic_with_error,
-    token::Client as TokenClient,
-    Address, Bytes, Env, Symbol, Vec,
+    contract, contractimpl, log, panic_with_error, token::Client as TokenClient, Address, Bytes,
+    Env, Symbol, Vec,
 };
 
 use crate::events::*;
 
 use crate::{
     storage::{
-        add_artist_listing_id, get_artist_listing_ids, get_listing_count,
-        increment_listing_count, load_listing, save_listing,
+        add_artist_listing_id, get_artist_listing_ids, get_listing_count, increment_listing_count,
+        load_listing, save_listing,
     },
-    types::{Listing, ListingStatus, MarketplaceError},
+    types::{Listing, ListingStatus, MarketplaceError, Recipient},
 };
 
 // ────────────────────────────────────────────────────────────
@@ -92,12 +91,12 @@ impl MarketplaceContract {
         if admin != stored_admin {
             panic_with_error!(&env, MarketplaceError::Unauthorized);
         }
-    crate::storage::set_treasury_storage(&env, &treasury);
+        crate::storage::set_treasury_storage(&env, &treasury);
     }
 
     /// Anyone can view the treasury address
     pub fn get_treasury(env: Env) -> Option<Address> {
-    crate::storage::get_treasury_storage(&env)
+        crate::storage::get_treasury_storage(&env)
     }
 
     /// Admin-only: Set the protocol fee (in basis points)
@@ -110,12 +109,12 @@ impl MarketplaceContract {
         if bps > 1000 {
             panic_with_error!(&env, MarketplaceError::InvalidPrice); // Reuse error for now
         }
-    crate::storage::set_protocol_fee_bps_storage(&env, bps);
+        crate::storage::set_protocol_fee_bps_storage(&env, bps);
     }
 
     /// Anyone can view the protocol fee (in basis points)
     pub fn get_protocol_fee(env: Env) -> Option<u32> {
-    crate::storage::get_protocol_fee_bps_storage(&env)
+        crate::storage::get_protocol_fee_bps_storage(&env)
     }
     // ── Admin/Whitelist Management ─────────────────────────
 
@@ -133,7 +132,11 @@ impl MarketplaceContract {
     pub fn add_token_to_whitelist(env: Env, token: Address) {
         Self::require_admin(&env);
         let key = crate::storage::DataKey::TokenWhitelist;
-        let mut whitelist = env.storage().persistent().get::<_, Vec<Address>>(&key).unwrap_or(Vec::new(&env));
+        let mut whitelist = env
+            .storage()
+            .persistent()
+            .get::<_, Vec<Address>>(&key)
+            .unwrap_or(Vec::new(&env));
         if !whitelist.contains(&token) {
             whitelist.push_back(token);
             env.storage().persistent().set(&key, &whitelist);
@@ -144,7 +147,11 @@ impl MarketplaceContract {
     pub fn remove_token_from_whitelist(env: Env, token: Address) {
         Self::require_admin(&env);
         let key = crate::storage::DataKey::TokenWhitelist;
-        let mut whitelist = env.storage().persistent().get::<_, Vec<Address>>(&key).unwrap_or(Vec::new(&env));
+        let mut whitelist = env
+            .storage()
+            .persistent()
+            .get::<_, Vec<Address>>(&key)
+            .unwrap_or(Vec::new(&env));
         let mut new_whitelist = Vec::new(&env);
         for t in whitelist.iter() {
             if t != token {
@@ -157,14 +164,22 @@ impl MarketplaceContract {
     /// Internal: require that the caller is the admin
     fn require_admin(env: &Env) {
         let key = crate::storage::DataKey::Admin;
-        let admin = env.storage().persistent().get::<_, Address>(&key).expect("admin not set");
+        let admin = env
+            .storage()
+            .persistent()
+            .get::<_, Address>(&key)
+            .expect("admin not set");
         admin.require_auth();
     }
 
     /// Check if a token is whitelisted (returns true if whitelist is empty)
     fn is_token_whitelisted(env: &Env, token: &Address) -> bool {
         let key = crate::storage::DataKey::TokenWhitelist;
-        let whitelist = env.storage().persistent().get::<_, Vec<Address>>(&key).unwrap_or(Vec::new(env));
+        let whitelist = env
+            .storage()
+            .persistent()
+            .get::<_, Vec<Address>>(&key)
+            .unwrap_or(Vec::new(env));
         if whitelist.is_empty() {
             true
         } else {
@@ -185,6 +200,7 @@ impl MarketplaceContract {
         currency: Symbol,
         token: Address,
         royalty_bps: u32,
+        recipients: Vec<Recipient>,
     ) -> u64 {
         artist.require_auth();
         if metadata_cid.is_empty() {
@@ -193,6 +209,22 @@ impl MarketplaceContract {
         if price <= 0 {
             panic_with_error!(&env, MarketplaceError::InvalidPrice);
         }
+
+        let recipients_len = recipients.len();
+        if recipients_len == 0 || recipients_len > 4 {
+            panic_with_error!(&env, MarketplaceError::TooManyRecipients);
+        }
+
+        let mut total_percentage = 0;
+        for i in 0..recipients_len {
+            let recipient = recipients.get(i).unwrap();
+            total_percentage += recipient.percentage;
+        }
+
+        if total_percentage != 100 {
+            panic_with_error!(&env, MarketplaceError::InvalidSplit);
+        }
+
         if royalty_bps > 10000 {
             panic_with_error!(&env, MarketplaceError::InvalidPrice); // Reuse error for now
         }
@@ -211,6 +243,7 @@ impl MarketplaceContract {
             price,
             currency,
             token,
+            recipients,
             status: ListingStatus::Active,
             owner: None,
             created_at: env.ledger().sequence(),
@@ -219,6 +252,13 @@ impl MarketplaceContract {
         };
         save_listing(&env, &listing);
         add_artist_listing_id(&env, &artist, listing_id);
+        log!(
+            &env,
+            "Listing created: id={}, artist={}",
+            listing_id,
+            artist
+        );
+
         ListingCreatedEvent {
             listing_id,
             artist: artist.clone(),
@@ -226,7 +266,8 @@ impl MarketplaceContract {
             currency: currency_cloned,
             metadata_cid: metadata_cid_cloned,
             ledger_sequence: env.ledger().sequence(),
-        }.publish(&env);
+        }
+        .publish(&env);
         listing_id
     }
 
@@ -265,15 +306,20 @@ impl MarketplaceContract {
             if listing.royalty_bps > 0 && listing.original_creator != listing.artist {
                 let royalty = listing.price * listing.royalty_bps as i128 / 10_000;
                 if royalty > 0 {
-                    token.transfer(&env.current_contract_address(), &listing.original_creator, &royalty);
+                    token.transfer(
+                        &env.current_contract_address(),
+                        &listing.original_creator,
+                        &royalty,
+                    );
                     payout -= royalty;
                     royalty_paid = true;
                 }
             }
 
             // 2. Protocol fee to treasury (if set)
-            let protocol_fee_bps = get_protocol_fee_bps(&env).unwrap_or(0);
-            let treasury = get_treasury(&env);
+            // Fix upstream compilation
+            let protocol_fee_bps = crate::storage::get_protocol_fee_bps_storage(&env).unwrap_or(0);
+            let treasury = crate::storage::get_treasury_storage(&env);
             if protocol_fee_bps > 0 {
                 let fee = payout * protocol_fee_bps as i128 / 10_000;
                 if let Some(treasury_addr) = treasury {
@@ -284,8 +330,25 @@ impl MarketplaceContract {
                 }
             }
 
-            // 3. Remainder to seller (artist)
-            token.transfer(&env.current_contract_address(), &listing.artist, &payout);
+            // 3. Remainder to recipients array
+            let recipients_len = listing.recipients.len();
+            let mut distributed_so_far: i128 = 0;
+
+            for i in 0..recipients_len {
+                let recipient = listing.recipients.get(i).unwrap();
+                let amount_to_transfer = if i == recipients_len - 1 {
+                    payout - distributed_so_far
+                } else {
+                    (payout * recipient.percentage as i128) / 100
+                };
+
+                token.transfer(
+                    &env.current_contract_address(),
+                    &recipient.address,
+                    &amount_to_transfer,
+                );
+                distributed_so_far += amount_to_transfer;
+            }
         }
 
         // Update listing state.
@@ -300,7 +363,8 @@ impl MarketplaceContract {
             price: listing.price,
             currency: listing.currency.clone(),
             ledger_sequence: env.ledger().sequence(),
-        }.publish(&env);
+        }
+        .publish(&env);
 
         true
     }
@@ -327,7 +391,8 @@ impl MarketplaceContract {
             listing_id,
             artist: artist.clone(),
             ledger_sequence: env.ledger().sequence(),
-        }.publish(&env);
+        }
+        .publish(&env);
         true
     }
 
@@ -360,11 +425,9 @@ impl MarketplaceContract {
     /// every Stellar network (both testnet and mainnet).
     #[cfg(not(test))]
     fn xlm_token_address(env: &Env) -> Address {
-        Address::from_string_bytes(
-            &soroban_sdk::Bytes::from_slice(
-                env,
-                b"CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
-            ),
-        )
+        Address::from_string_bytes(&soroban_sdk::Bytes::from_slice(
+            env,
+            b"CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+        ))
     }
 }

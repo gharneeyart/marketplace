@@ -1,6 +1,6 @@
 // events.rs — Defines all contract event schemas for Afristore Marketplace
 
-use soroban_sdk::{contracttype, contractevent, symbol_short, Address, Bytes, Symbol};
+use soroban_sdk::{contractevent, contracttype, symbol_short, Address, Bytes, Symbol};
 
 // Versioned event topics as Symbol constants
 pub const LISTING_CREATED: Symbol = symbol_short!("lst_crtd");

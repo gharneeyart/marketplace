@@ -1,8 +1,12 @@
 #[cfg(test)]
 mod tests {
     use super::*;
-    use soroban_sdk::{testutils::{Address as _, Events}, Env, Address, bytes, symbol_short};
     use crate::{MarketplaceContract, MarketplaceContractClient};
+    use soroban_sdk::{
+        bytes, symbol_short,
+        testutils::{Address as _, Events},
+        Address, Env,
+    };
 
     #[test]
     fn test_create_listing_success() {
@@ -26,11 +30,18 @@ mod tests {
             &symbol_short!("XLM"),
             &contract_id,
             &0u32,
+            &soroban_sdk::vec![
+                &env,
+                crate::types::Recipient {
+                    address: artist.clone(),
+                    percentage: 100,
+                }
+            ],
         );
 
         assert_eq!(listing_id, 1u64);
-    // Events are now visible on the original env
-    let _events = env.events().all();
+        // Events are now visible on the original env
+        let _events = env.events().all();
     }
 }
 // ------------------------------------------------------------
@@ -69,10 +80,10 @@ pub enum DataKey {
     Admin,
     /// Stores the token whitelist as a Vec<Address>
     TokenWhitelist,
-        /// Stores the treasury address
-        Treasury,
-        /// Stores the protocol fee in basis points
-        ProtocolFeeBps, // fee in basis points (1/100 of a percent)
+    /// Stores the treasury address
+    Treasury,
+    /// Stores the protocol fee in basis points
+    ProtocolFeeBps, // fee in basis points (1/100 of a percent)
 }
 
 // ── Bump amounts (ledger sequences) ─────────────────────────
@@ -95,9 +106,11 @@ pub fn increment_listing_count(env: &Env) -> u64 {
     env.storage()
         .persistent()
         .set(&DataKey::ListingCount, &count);
-    env.storage()
-        .persistent()
-        .extend_ttl(&DataKey::ListingCount, LEDGER_TTL_THRESHOLD, LEDGER_TTL_BUMP);
+    env.storage().persistent().extend_ttl(
+        &DataKey::ListingCount,
+        LEDGER_TTL_THRESHOLD,
+        LEDGER_TTL_BUMP,
+    );
     count
 }
 
@@ -153,7 +166,9 @@ pub fn get_treasury_storage(env: &Env) -> Option<Address> {
 }
 
 pub fn set_protocol_fee_bps_storage(env: &Env, bps: u32) {
-    env.storage().persistent().set(&DataKey::ProtocolFeeBps, &bps);
+    env.storage()
+        .persistent()
+        .set(&DataKey::ProtocolFeeBps, &bps);
 }
 
 pub fn get_protocol_fee_bps_storage(env: &Env) -> Option<u32> {
