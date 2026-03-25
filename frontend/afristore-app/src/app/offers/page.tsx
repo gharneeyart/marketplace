@@ -80,11 +80,10 @@ export default function OffersPage() {
             <button
               key={key}
               onClick={() => setTab(key)}
-              className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 ${
-                tab === key
+              className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 ${tab === key
                   ? "border-brand-500 text-brand-600"
                   : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
+                }`}
             >
               {label}
             </button>
@@ -145,7 +144,7 @@ export default function OffersPage() {
                     </td>
                     <td className="px-5 py-3 font-mono text-xs">
                       <Link
-                        href={`/listing/${o.listing_id}`}
+                        href={`/listings/${o.listing_id}`}
                         className="text-brand-500 hover:text-brand-600 hover:underline"
                       >
                         #{o.listing_id}
@@ -156,9 +155,8 @@ export default function OffersPage() {
                     </td>
                     <td className="px-5 py-3 text-center">
                       <span
-                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                          STATUS_COLOR[o.status] ?? ""
-                        }`}
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_COLOR[o.status] ?? ""
+                          }`}
                       >
                         {o.status}
                       </span>

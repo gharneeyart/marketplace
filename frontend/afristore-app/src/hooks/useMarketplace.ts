@@ -206,3 +206,63 @@ export function useCancelListing(artistPublicKey: string | null) {
 
   return { cancel, isCancelling, error };
 }
+
+// ── useAuction ────────────────────────────────────────────────
+
+import { getAuction, placeBid, Auction } from "@/lib/contract";
+
+export function useAuction(auctionId: number | null) {
+  const [auction, setAuction] = useState<Auction | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    if (auctionId === null) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const a = await getAuction(auctionId);
+      setAuction(a);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to load auction");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [auctionId]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { auction, isLoading, error, refresh };
+}
+
+// ── usePlaceBid ───────────────────────────────────────────────
+
+export function usePlaceBid(bidderPublicKey: string | null) {
+  const [isBidding, setIsBidding] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const bid = useCallback(
+    async (auctionId: number, amountXlm: number): Promise<boolean> => {
+      if (!bidderPublicKey) {
+        setError("Wallet not connected");
+        return false;
+      }
+      setIsBidding(true);
+      setError(null);
+      try {
+        await placeBid(bidderPublicKey, auctionId, amountXlm);
+        return true;
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Bid failed");
+        return false;
+      } finally {
+        setIsBidding(false);
+      }
+    },
+    [bidderPublicKey]
+  );
+
+  return { bid, isBidding, error };
+}

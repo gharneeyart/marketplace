@@ -37,3 +37,29 @@ export function useUserActivity(publicKey: string | null) {
 
     return { activities, royaltyStats, isLoading, error, refresh };
 }
+
+export function useListingActivity(listingId: number | null) {
+    const [activities, setActivities] = useState<ActivityEvent[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const refresh = useCallback(async () => {
+        if (listingId === null) return;
+        setIsLoading(true);
+        setError(null);
+        try {
+            const history = await import("@/lib/indexer").then(m => m.getListingActivity(listingId));
+            setActivities(history);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to load listing activity");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [listingId]);
+
+    useEffect(() => {
+        refresh();
+    }, [refresh]);
+
+    return { activities, isLoading, error, refresh };
+}

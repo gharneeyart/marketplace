@@ -96,3 +96,37 @@ export async function getRoyaltyStats(publicKey: string) {
         lastPayout: Date.now() - 86400000 * 5
     };
 }
+
+/**
+ * Fetches activity for a specific listing
+ */
+export async function getListingActivity(listingId: number): Promise<ActivityEvent[]> {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve([
+                {
+                    id: `evt_l_${listingId}_1`,
+                    type: "LISTED",
+                    listing_id: listingId,
+                    title: "Artwork",
+                    price: "100.00",
+                    timestamp: Date.now() - 86400000 * 10,
+                    from: "GA...ARTIST",
+                    to: config.contractId,
+                    tx_hash: "abc...1"
+                },
+                {
+                    id: `evt_l_${listingId}_2`,
+                    type: "PURCHASE",
+                    listing_id: listingId,
+                    title: "Artwork",
+                    price: "100.00",
+                    timestamp: Date.now() - 86400000 * 2,
+                    from: "GA...ARTIST",
+                    to: "GB...BUYER",
+                    tx_hash: "def...2"
+                }
+            ]);
+        }, 1000);
+    });
+}

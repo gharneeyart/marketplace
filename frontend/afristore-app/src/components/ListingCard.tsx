@@ -54,7 +54,7 @@ export function ListingCard({ listing, onPurchased }: ListingCardProps) {
   return (
     <div className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow">
       {/* Image */}
-      <Link href={`/listing/${listing.listing_id}`}>
+      <Link href={`/listings/${listing.listing_id}`}>
         <div className="relative aspect-square overflow-hidden bg-brand-50">
           {!imgError ? (
             <Image
@@ -82,7 +82,7 @@ export function ListingCard({ listing, onPurchased }: ListingCardProps) {
 
       {/* Info */}
       <div className="flex flex-1 flex-col p-4">
-        <Link href={`/listing/${listing.listing_id}`}>
+        <Link href={`/listings/${listing.listing_id}`}>
           <h3 className="truncate text-base font-semibold text-gray-900 hover:text-brand-600 transition-colors">
             {metadata?.title ?? `Artwork #${listing.listing_id}`}
           </h3>
