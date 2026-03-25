@@ -298,6 +298,79 @@ fn test_cancel_listing_wrong_artist() {
     client.cancel_listing(&buyer, &id);
 }
 
+// ── update_listing ───────────────────────────────────────────
+
+#[test]
+fn test_update_listing_success() {
+    let (env, client, artist, _, contract_id) = setup();
+    client.set_admin(&artist);
+    client.add_token_to_whitelist(&contract_id);
+    let cid = bytes!(&env, 0x516d74657374);
+    let id = client.create_listing(
+        &artist,
+        &cid,
+        &5_000_000_i128,
+        &symbol_short!("XLM"),
+        &contract_id,
+        &0u32,
+        &valid_recipients(&env, &artist),
+    );
+
+    let new_cid = bytes!(&env, 0x516e6577434944);
+    let new_price = 10_000_000_i128;
+    let result = client.update_listing(&artist, &id, &new_cid, &new_price, &contract_id);
+    assert!(result);
+
+    let listing = client.get_listing(&id);
+    assert_eq!(listing.metadata_cid, new_cid);
+    assert_eq!(listing.price, new_price);
+    assert_eq!(listing.token, contract_id);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #5)")]
+fn test_update_listing_wrong_artist() {
+    let (env, client, artist, buyer, contract_id) = setup();
+    client.set_admin(&artist);
+    client.add_token_to_whitelist(&contract_id);
+    let cid = bytes!(&env, 0x516d74657374);
+    let id = client.create_listing(
+        &artist,
+        &cid,
+        &5_000_000_i128,
+        &symbol_short!("XLM"),
+        &contract_id,
+        &0u32,
+        &valid_recipients(&env, &artist),
+    );
+
+    let new_cid = bytes!(&env, 0x51);
+    client.update_listing(&buyer, &id, &new_cid, &10_000_000_i128, &contract_id);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #4)")]
+fn test_update_listing_not_active() {
+    let (env, client, artist, _, contract_id) = setup();
+    client.set_admin(&artist);
+    client.add_token_to_whitelist(&contract_id);
+    let cid = bytes!(&env, 0x516d74657374);
+    let id = client.create_listing(
+        &artist,
+        &cid,
+        &5_000_000_i128,
+        &symbol_short!("XLM"),
+        &contract_id,
+        &0u32,
+        &valid_recipients(&env, &artist),
+    );
+
+    client.cancel_listing(&artist, &id);
+
+    let new_cid = bytes!(&env, 0x51);
+    client.update_listing(&artist, &id, &new_cid, &10_000_000_i128, &contract_id);
+}
+
 // ── get_artist_listings ──────────────────────────────────────
 
 #[test]

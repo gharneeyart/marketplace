@@ -7,11 +7,11 @@
 import { useState } from "react";
 import { useWalletContext } from "@/context/WalletContext";
 import { useArtistListings, useCancelListing } from "@/hooks/useMarketplace";
-import { UploadArtworkForm } from "@/components/UploadArtworkForm";
+import { ListingForm } from "@/components/ListingForm";
 import { stroopsToXlm, Listing } from "@/lib/contract";
-import { Plus, Package, XCircle, Wallet } from "lucide-react";
+import { Plus, Package, XCircle, Wallet, Edit2 } from "lucide-react";
 
-type Tab = "listings" | "list";
+type Tab = "listings" | "list" | "edit";
 
 const STATUS_COLOR: Record<string, string> = {
   Active: "text-green-600 bg-green-50",
@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const { listings, isLoading, refresh } = useArtistListings(publicKey);
   const { cancel, isCancelling } = useCancelListing(publicKey);
   const [tab, setTab] = useState<Tab>("listings");
+  const [editingListing, setEditingListing] = useState<Listing | null>(null);
 
   const activeCnt = listings.filter((l: Listing) => l.status === "Active").length;
   const soldCnt = listings.filter((l: Listing) => l.status === "Sold").length;
@@ -84,18 +85,43 @@ export default function DashboardPage() {
             <Plus size={14} />
             New Listing
           </button>
+          {tab === "edit" && (
+            <button
+                className="pb-3 px-1 text-sm font-medium transition-colors border-b-2 border-brand-500 text-brand-600"
+            >
+                Edit Listing #{editingListing?.listing_id}
+            </button>
+          )}
         </div>
 
         {/* Tab content */}
         {tab === "list" ? (
           <div className="max-w-lg">
-            <UploadArtworkForm
+            <ListingForm
               onSuccess={() => {
                 refresh();
                 setTab("listings");
               }}
+              onCancel={() => setTab("listings")}
             />
           </div>
+        ) : tab === "edit" ? (
+            <div className="max-w-lg">
+              {editingListing && (
+                <ListingForm
+                  listing={editingListing}
+                  onSuccess={() => {
+                    refresh();
+                    setTab("listings");
+                    setEditingListing(null);
+                  }}
+                  onCancel={() => {
+                    setTab("listings");
+                    setEditingListing(null);
+                  }}
+                />
+              )}
+            </div>
         ) : (
           <>
             {isLoading ? (
@@ -146,19 +172,33 @@ export default function DashboardPage() {
                           </span>
                         </td>
                         <td className="px-5 py-3 text-right">
-                          {l.status === "Active" && (
-                            <button
-                              onClick={async () => {
-                                await cancel(l.listing_id);
-                                refresh();
-                              }}
-                              disabled={isCancelling}
-                              className="flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1 text-xs text-red-500 hover:bg-red-50 disabled:opacity-50"
-                            >
-                              <XCircle size={12} />
-                              Cancel
-                            </button>
-                          )}
+                          <div className="flex justify-end gap-2">
+                            {l.status === "Active" && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    setEditingListing(l);
+                                    setTab("edit");
+                                  }}
+                                  className="flex items-center gap-1 rounded-lg border border-brand-200 px-2.5 py-1 text-xs text-brand-600 hover:bg-brand-50"
+                                >
+                                  <Edit2 size={12} />
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    await cancel(l.listing_id);
+                                    refresh();
+                                  }}
+                                  disabled={isCancelling}
+                                  className="flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1 text-xs text-red-500 hover:bg-red-50 disabled:opacity-50"
+                                >
+                                  <XCircle size={12} />
+                                  Cancel
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

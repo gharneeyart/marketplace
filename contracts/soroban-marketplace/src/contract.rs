@@ -222,6 +222,61 @@ impl MarketplaceContract {
         listing_id
     }
 
+    // ── update_listing ───────────────────────────────────────
+    /// Artist updates an active listing with new metadata or price.
+    ///
+    /// * `metadata_cid` — new IPFS CID string
+    /// * `new_price`   — new price in stroops (i128, must be > 0)
+    /// * `new_token`   — new payment token contract address
+    pub fn update_listing(
+        env: Env,
+        artist: Address,
+        listing_id: u64,
+        new_metadata_cid: Bytes,
+        new_price: i128,
+        new_token: Address,
+    ) -> bool {
+        artist.require_auth();
+
+        let mut listing = load_listing(&env, listing_id)
+            .unwrap_or_else(|| panic_with_error!(&env, MarketplaceError::ListingNotFound));
+
+        if listing.artist != artist {
+            panic_with_error!(&env, MarketplaceError::Unauthorized);
+        }
+        if listing.status != ListingStatus::Active {
+            panic_with_error!(&env, MarketplaceError::ListingNotActive);
+        }
+        if new_price <= 0 {
+            panic_with_error!(&env, MarketplaceError::InvalidPrice);
+        }
+        if new_metadata_cid.is_empty() {
+            panic_with_error!(&env, MarketplaceError::InvalidCid);
+        }
+
+        // Whitelist check for the new token
+        if !Self::is_token_whitelisted(&env, &new_token) {
+            panic_with_error!(&env, MarketplaceError::Unauthorized);
+        }
+
+        listing.metadata_cid = new_metadata_cid;
+        listing.price = new_price;
+        listing.token = new_token;
+
+        save_listing(&env, &listing);
+
+        ListingUpdatedEvent {
+            listing_id,
+            artist: artist.clone(),
+            new_price: listing.price,
+            metadata_cid: listing.metadata_cid.clone(),
+            ledger_sequence: env.ledger().sequence(),
+        }
+        .publish(&env);
+
+        true
+    }
+
     // ── buy_artwork ──────────────────────────────────────────
     /// Buyer purchases an active listing by paying the listed price in XLM.
     ///

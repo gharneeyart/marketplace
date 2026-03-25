@@ -49,6 +49,16 @@ pub struct ListingCancelledEvent {
     pub ledger_sequence: u32,
 }
 
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ListingUpdatedEvent {
+    pub listing_id: u64,
+    pub artist: Address,
+    pub new_price: i128,
+    pub metadata_cid: Bytes,
+    pub ledger_sequence: u32,
+}
+
 // Add more event structs as needed for other actions
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -109,6 +119,12 @@ impl BidPlacedEvent {
 impl AuctionFinalizedEvent {
     pub fn publish(self, env: &Env) {
         env.events().publish((AUCTION_RESOLVED,), self);
+    }
+}
+
+impl ListingUpdatedEvent {
+    pub fn publish(self, env: &Env) {
+        env.events().publish((LISTING_UPDATED,), self);
     }
 }
 
