@@ -236,7 +236,7 @@ impl LazyMint721 {
             .ok_or(Error::TokenNotFound)?;
 
         // [SECURITY] Allow owner or authorized operator to approve (#48)
-        if spender != owner && !Self::_is_approved_for_all(&env, &spender, &owner) {
+        if spender != owner && !Self::is_approved_for_all(env.clone(), owner.clone(), spender.clone()) {
             return Err(Error::NotApproved);
         }
 
