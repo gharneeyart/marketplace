@@ -19,18 +19,14 @@ export interface FreighterAccount {
  * Returns true if the Freighter extension is installed in this browser.
  */
 export async function isFreighterInstalled(): Promise<boolean> {
-  // Check global objects
   if (typeof window !== "undefined") {
     if ((window as any).starlight || (window as any).freighter) {
       return true;
     }
   }
 
-  // Check API
   try {
-    return await isConnected();
     const connected = await isConnected();
-    // Some versions return a boolean, some return { isConnected: boolean }
     if (typeof connected === "boolean") return connected;
     if (connected && typeof (connected as any).isConnected === "boolean") {
       return (connected as any).isConnected;
@@ -47,44 +43,33 @@ export async function isFreighterInstalled(): Promise<boolean> {
  * Requests access to Freighter and returns the public key + network.
  */
 export async function connectFreighter(): Promise<FreighterAccount> {
-  // 1. setAllowed
   const allowed = await setAllowed();
-  if (!allowed) {
-    throw new Error("Freighter access was denied by the user.");
-  }
-
-  const publicKey = await getPublicKey();
-  if (!publicKey) {
-    throw new Error("Could not retrieve public key from Freighter.");
-  // Handle both boolean and { isAllowed: boolean }
   const isAllowed = typeof allowed === "boolean" ? allowed : (allowed as any)?.isAllowed;
 
   if (!isAllowed) {
     throw new Error("Freighter access was denied by the user.");
   }
 
-  // 2. getPublicKey
   const publicKey = await getPublicKey();
-  if (typeof publicKey !== "string") {
+  if (!publicKey || typeof publicKey !== "string") {
     const error = (publicKey as any)?.error;
     throw new Error(error ? `Freighter key error: ${error}` : "Failed to get public key from Freighter");
   }
 
-  // 3. getNetworkDetails
   const networkResult = await getNetworkDetails();
-  if (!networkResult) {
-    throw new Error("Could not retrieve network details from Freighter.");
+  if (!networkResult || (networkResult as any).error) {
+    const err = (networkResult as any)?.error;
+    throw new Error(err ? `Freighter network error: ${err}` : "Could not retrieve network details from Freighter.");
+  }
+
+  const networkPassphrase = (networkResult as any)?.networkPassphrase;
+  if (!networkPassphrase || typeof networkPassphrase !== "string") {
+    throw new Error("Invalid network passphrase from Freighter.");
   }
 
   return {
     publicKey,
-  if (!networkResult || (networkResult as any).error) {
-    throw new Error(`Freighter network error: ${(networkResult as any)?.error || "Unknown error"}`);
-  }
-
-  return {
-    publicKey: publicKey,
-    networkPassphrase: networkResult.networkPassphrase,
+    networkPassphrase,
   };
 }
 
@@ -97,12 +82,11 @@ export async function signWithFreighter(
   txXdr: string,
   networkPassphrase: string
 ): Promise<string> {
-  const signedTxXdr = await signTransaction(txXdr, { networkPassphrase });
-  if (!signedTxXdr) {
+  const result = await signTransaction(txXdr, { networkPassphrase });
+
+  if (!result) {
     throw new Error("Freighter sign error: result was empty.");
   }
-  return signedTxXdr;
-  const result = await signTransaction(txXdr, { networkPassphrase });
 
   if (typeof result === "string") return result;
 
@@ -121,10 +105,6 @@ export async function signWithFreighter(
  */
 export async function getConnectedPublicKey(): Promise<string | null> {
   try {
-    const connected = await isConnected();
-    if (!connected) return null;
-    const publicKey = await getPublicKey();
-    return publicKey || null;
     const installed = await isFreighterInstalled();
     if (!installed) return null;
 
