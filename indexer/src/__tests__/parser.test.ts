@@ -37,7 +37,7 @@ function setupMocks(topicSymbol: string, valueData: Record<string, any>) {
 
 describe('parseMarketplaceEvent — topic mapping', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mockFromXDR.mockReturnValue({});
   });
 
@@ -75,7 +75,7 @@ describe('parseMarketplaceEvent — topic mapping', () => {
 // ── fallback path (raw string topic) ─────────────────────────────────────────
 
 describe('parseMarketplaceEvent — XDR fallback', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => vi.resetAllMocks());
 
   it('falls back to the raw topic string when XDR parsing throws', () => {
     // First fromXDR call (for topic) throws; second call (for value) succeeds.
@@ -104,7 +104,7 @@ describe('parseMarketplaceEvent — XDR fallback', () => {
 
 describe('parseMarketplaceEvent — listingId', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mockFromXDR.mockReturnValue({});
   });
 
@@ -134,7 +134,7 @@ describe('parseMarketplaceEvent — listingId', () => {
 
 describe('parseMarketplaceEvent — actor priority', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mockFromXDR.mockReturnValue({});
   });
 
@@ -173,7 +173,7 @@ describe('parseMarketplaceEvent — actor priority', () => {
 
 describe('parseMarketplaceEvent — ledgerSequence', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mockFromXDR.mockReturnValue({});
   });
 
@@ -187,7 +187,7 @@ describe('parseMarketplaceEvent — ledgerSequence', () => {
 
 describe('parseMarketplaceEvent — BigInt serialisation in data', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mockFromXDR.mockReturnValue({});
   });
 
