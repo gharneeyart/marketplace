@@ -1,6 +1,6 @@
 import { rpc } from '@stellar/stellar-sdk';
-import prisma from './db';
-import { parseMarketplaceEvent } from './parser';
+import prisma from './db.js';
+import { parseMarketplaceEvent } from './parser.js';
 import dotenv from 'dotenv';
 
 dotenv.config();

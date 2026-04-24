@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import routes from './api/routes';
-import { startPolling } from './poller';
+import routes from './api/routes.js';
+import { startPolling } from './poller.js';
 
 dotenv.config();
 
