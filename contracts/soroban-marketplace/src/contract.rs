@@ -75,6 +75,35 @@ impl MarketplaceContract {
         crate::storage::get_protocol_fee_bps_storage(&env).unwrap_or(0)
     }
 
+    // ── Pause/Unpause Mechanism ────────────────────────────
+
+    pub fn admin_pause(env: Env, admin: Address) {
+        admin.require_auth();
+        let stored_admin = Self::get_admin(env.clone()).expect("admin not set");
+        if admin != stored_admin {
+            panic_with_error!(&env, MarketplaceError::Unauthorized);
+        }
+        crate::storage::set_paused(&env, true);
+        #[allow(deprecated)]
+        env.events().publish((crate::events::CONTRACT_PAUSED,), ());
+    }
+
+    pub fn admin_unpause(env: Env, admin: Address) {
+        admin.require_auth();
+        let stored_admin = Self::get_admin(env.clone()).expect("admin not set");
+        if admin != stored_admin {
+            panic_with_error!(&env, MarketplaceError::Unauthorized);
+        }
+        crate::storage::set_paused(&env, false);
+        #[allow(deprecated)]
+        env.events()
+            .publish((crate::events::CONTRACT_UNPAUSED,), ());
+    }
+
+    pub fn is_paused(env: Env) -> bool {
+        crate::storage::is_paused(&env)
+    }
+
     // ── Artist Moderation ───────────────────────────────────
 
     pub fn revoke_artist(env: Env, artist: Address) {
@@ -151,6 +180,9 @@ impl MarketplaceContract {
         royalty_bps: u32,
         recipients: Vec<Recipient>,
     ) -> u64 {
+        if crate::storage::is_paused(&env) {
+            panic_with_error!(&env, MarketplaceError::ContractPaused);
+        }
         artist.require_auth();
         if Self::is_artist_revoked(env.clone(), artist.clone()) {
             panic_with_error!(&env, MarketplaceError::Unauthorized);
@@ -219,6 +251,9 @@ impl MarketplaceContract {
         new_token: Address,
         new_recipients: Vec<Recipient>,
     ) -> bool {
+        if crate::storage::is_paused(&env) {
+            panic_with_error!(&env, MarketplaceError::ContractPaused);
+        }
         artist.require_auth();
         let mut listing = load_listing(&env, listing_id)
             .unwrap_or_else(|| panic_with_error!(&env, MarketplaceError::ListingNotFound));
@@ -255,6 +290,9 @@ impl MarketplaceContract {
     }
 
     pub fn buy_artwork(env: Env, buyer: Address, listing_id: u64) -> bool {
+        if crate::storage::is_paused(&env) {
+            panic_with_error!(&env, MarketplaceError::ContractPaused);
+        }
         buyer.require_auth();
 
         // Reentrancy guard
@@ -331,6 +369,9 @@ impl MarketplaceContract {
     }
 
     pub fn cancel_listing(env: Env, artist: Address, listing_id: u64) -> bool {
+        if crate::storage::is_paused(&env) {
+            panic_with_error!(&env, MarketplaceError::ContractPaused);
+        }
         artist.require_auth();
         let mut listing = load_listing(&env, listing_id)
             .unwrap_or_else(|| panic_with_error!(&env, MarketplaceError::ListingNotFound));
@@ -356,6 +397,9 @@ impl MarketplaceContract {
         royalty_bps: u32,
         recipients: Vec<Recipient>,
     ) -> u64 {
+        if crate::storage::is_paused(&env) {
+            panic_with_error!(&env, MarketplaceError::ContractPaused);
+        }
         creator.require_auth();
         if Self::is_artist_revoked(env.clone(), creator.clone()) {
             panic_with_error!(&env, MarketplaceError::Unauthorized);
@@ -388,6 +432,9 @@ impl MarketplaceContract {
     }
 
     pub fn place_bid(env: Env, bidder: Address, auction_id: u64, amount: i128) {
+        if crate::storage::is_paused(&env) {
+            panic_with_error!(&env, MarketplaceError::ContractPaused);
+        }
         bidder.require_auth();
         let mut auction = load_auction(&env, auction_id)
             .unwrap_or_else(|| panic_with_error!(&env, MarketplaceError::AuctionNotFound));
@@ -469,6 +516,9 @@ impl MarketplaceContract {
         amount: i128,
         token: Address,
     ) -> u64 {
+        if crate::storage::is_paused(&env) {
+            panic_with_error!(&env, MarketplaceError::ContractPaused);
+        }
         offerer.require_auth();
         let listing = load_listing(&env, listing_id)
             .unwrap_or_else(|| panic_with_error!(&env, MarketplaceError::ListingNotFound));
@@ -512,6 +562,9 @@ impl MarketplaceContract {
     }
 
     pub fn withdraw_offer(env: Env, offerer: Address, offer_id: u64) {
+        if crate::storage::is_paused(&env) {
+            panic_with_error!(&env, MarketplaceError::ContractPaused);
+        }
         offerer.require_auth();
         let mut offer = load_offer(&env, offer_id)
             .unwrap_or_else(|| panic_with_error!(&env, MarketplaceError::OfferNotFound));
@@ -534,6 +587,9 @@ impl MarketplaceContract {
     }
 
     pub fn reject_offer(env: Env, artist: Address, offer_id: u64) {
+        if crate::storage::is_paused(&env) {
+            panic_with_error!(&env, MarketplaceError::ContractPaused);
+        }
         artist.require_auth();
         let mut offer = load_offer(&env, offer_id)
             .unwrap_or_else(|| panic_with_error!(&env, MarketplaceError::OfferNotFound));
@@ -558,6 +614,9 @@ impl MarketplaceContract {
     }
 
     pub fn accept_offer(env: Env, artist: Address, offer_id: u64) {
+        if crate::storage::is_paused(&env) {
+            panic_with_error!(&env, MarketplaceError::ContractPaused);
+        }
         artist.require_auth();
         let mut offer = load_offer(&env, offer_id)
             .unwrap_or_else(|| panic_with_error!(&env, MarketplaceError::OfferNotFound));
