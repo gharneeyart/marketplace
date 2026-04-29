@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const db_js_1 = __importDefault(require("../db.js"));
 const cache_middleware_js_1 = require("./cache-middleware.js");
+const rate_limit_middleware_js_1 = require("./rate-limit-middleware.js");
 const router = (0, express_1.Router)();
 // Helper to serialize BigInts to strings for JSON
 const serialize = (obj) => JSON.parse(JSON.stringify(obj, (key, value) => typeof value === 'bigint' ? value.toString() : value));
@@ -91,7 +92,7 @@ router.get('/creators/:address/collections', async (req, res) => {
     }
 });
 // GET /wallets/:address/activity — events relevant to a Stellar account
-router.get('/wallets/:address/activity', async (req, res) => {
+router.get('/wallets/:address/activity', rate_limit_middleware_js_1.strictRateLimiter, async (req, res) => {
     const address = req.params.address;
     const take = Math.min(parseInt(String(req.query.limit || '50'), 10) || 50, 200);
     try {
@@ -113,7 +114,7 @@ router.get('/wallets/:address/activity', async (req, res) => {
     }
 });
 // GET /wallets/:address/royalty-stats — aggregates royalty-bearing sales for an artist
-router.get('/wallets/:address/royalty-stats', async (req, res) => {
+router.get('/wallets/:address/royalty-stats', rate_limit_middleware_js_1.strictRateLimiter, async (req, res) => {
     const { address } = req.params;
     try {
         const sold = await db_js_1.default.listing.findMany({
