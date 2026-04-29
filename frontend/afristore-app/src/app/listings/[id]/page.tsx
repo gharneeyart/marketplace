@@ -1,14 +1,130 @@
-import { Metadata } from 'next'
-import ListingClient from './ListingClient'
-import { getListing, getAuction, stroopsToXlm } from '@/lib/contract'
-import { fetchMetadata, cidToGatewayUrl } from '@/lib/ipfs'
-import { config } from '@/lib/config'
+// ─────────────────────────────────────────────────────────────
+// app/listings/[id]/page.tsx — Premium NFT listing detail page
+// ─────────────────────────────────────────────────────────────
 
-interface ListingPageProps {
-  params: Promise<{
-    id: string
-  }>
-}
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
+import {
+    stroopsToXlm,
+    Listing,
+    Auction,
+    getListing,
+    getAuction,
+    ListingStatus,
+    AuctionStatus
+} from "@/lib/contract";
+import { fetchMetadata, cidToGatewayUrl, ArtworkMetadata } from "@/lib/ipfs";
+import { useWalletContext } from "@/context/WalletContext";
+import { useBuyArtwork, usePlaceBid } from "@/hooks/useMarketplace";
+import { useListingOffers } from "@/hooks/useOffers";
+import { useListingActivity } from "@/hooks/useUserActivity";
+import { GuardButton } from "@/components/WalletGuard";
+import {
+    ArrowLeft,
+    ExternalLink,
+    ShoppingCart,
+    User,
+    Calendar,
+    Tag,
+    Hash,
+    Clock,
+    Gavel,
+    History,
+    ShieldCheck,
+    CheckCircle2,
+    AlertCircle,
+    TrendingUp,
+    Landmark,
+    Share2,
+} from "lucide-react";
+
+export default function ListingDetailPage() {
+    const { id } = useParams<{ id: string }>();
+    const router = useRouter();
+    const { publicKey } = useWalletContext();
+
+    // State
+    const [listing, setListing] = useState<Listing | null>(null);
+    const [auction, setAuction] = useState<Auction | null>(null);
+    const [metadata, setMetadata] = useState<ArtworkMetadata | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<'details' | 'history' | 'offers'>('details');
+
+    // Hooks
+    const { buy, isBuying, error: buyError } = useBuyArtwork(publicKey);
+    const { bid, isBidding, error: bidError } = usePlaceBid(publicKey);
+    const { offers, isLoading: isLoadingOffers, refresh: refreshOffers } = useListingOffers(id ? Number(id) : null);
+    const { activities, isLoading: isLoadingActivity } = useListingActivity(id ? Number(id) : null);
+
+    useEffect(() => {
+        const loadData = async () => {
+            if (!id) return;
+            setIsLoading(true);
+            setError(null);
+            try {
+                // Try fetching as listing first
+                let l: Listing | null = null;
+                let a: Auction | null = null;
+
+                try {
+                    l = await getListing(Number(id));
+                    setListing(l);
+                } catch (e) {
+                    // Might be an auction only or not found
+                    console.log("Not found as listing, checking auction...");
+                }
+
+                try {
+                    a = await getAuction(Number(id));
+                    setAuction(a);
+                } catch (e) {
+                    // Might be a listing only
+                    console.log("Not found as auction.");
+                }
+
+                if (!l && !a) {
+                    throw new Error("Artwork not found on-chain");
+                }
+
+                const cid = l?.metadata_cid || a?.metadata_cid;
+                if (cid) {
+                    const m = await fetchMetadata(cid);
+                    setMetadata(m);
+                }
+            } catch (err: any) {
+                console.error("Error loading data:", err);
+                setError(err.message || "Failed to load artwork details");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadData();
+    }, [id]);
+
+    const handleBuy = async () => {
+        if (!listing) return;
+        const success = await buy(listing.listing_id);
+        if (success) {
+            // Reload
+            const updated = await getListing(listing.listing_id);
+            setListing(updated);
+        }
+    };
+
+    const [bidAmount, setBidAmount] = useState("");
+    const handleBid = async () => {
+        if (!auction || !bidAmount) return;
+        const success = await bid(auction.auction_id, Number(bidAmount));
+        if (success) {
+            const updated = await getAuction(auction.auction_id);
+            setAuction(updated);
+            setBidAmount("");
+        }
+    };
 
 export async function generateMetadata({ params }: ListingPageProps): Promise<Metadata> {
   const { id } = await params
