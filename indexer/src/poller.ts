@@ -1,12 +1,13 @@
 import { rpc } from '@stellar/stellar-sdk';
-import prisma from './db';
-import { parseMarketplaceEvent } from './parser';
+import prisma from './db.js';
+import { parseMarketplaceEvent } from './parser.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const RPC_URL = process.env.STELLAR_RPC_URL || 'https://soroban-testnet.stellar.org';
 const CONTRACT_ID = process.env.MARKETPLACE_CONTRACT_ID || '';
+const LAUNCHPAD_CONTRACT_ID = process.env.LAUNCHPAD_CONTRACT_ID || '';
 const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL_MS || '5000');
 
 const server = new rpc.Server(RPC_URL);
@@ -33,7 +34,7 @@ export async function startPolling() {
         filters: [
           {
             type: 'contract',
-            contractIds: [CONTRACT_ID],
+            contractIds: [CONTRACT_ID, LAUNCHPAD_CONTRACT_ID].filter(Boolean),
           },
         ],
       });
@@ -76,7 +77,7 @@ export async function startPolling() {
   }
 }
 
-async function processEvent(event: any) {
+export async function processEvent(event: any) {
   const { eventType, listingId, actor, ledgerSequence, data } = event;
 
   // 1. Log to MarketplaceEvent history
@@ -163,5 +164,37 @@ async function processEvent(event: any) {
             }
         });
         break;
+
+    case 'DEPLOY_NORMAL_721':
+    case 'DEPLOY_NORMAL_1155':
+    case 'DEPLOY_LAZY_721':
+    case 'DEPLOY_LAZY_1155': {
+      const kindMap: Record<string, string> = {
+        DEPLOY_NORMAL_721:  'normal_721',
+        DEPLOY_NORMAL_1155: 'normal_1155',
+        DEPLOY_LAZY_721:    'lazy_721',
+        DEPLOY_LAZY_1155:   'lazy_1155',
+      };
+      // data is the raw tuple array [creator, collectionAddress]
+      const rawData = Array.isArray(data) ? data : [];
+      const creatorAddr  = rawData[0]?.toString() || actor;
+      const contractAddr = rawData[1]?.toString() || '';
+      if (contractAddr) {
+        await prisma.collection.upsert({
+          where: { contractAddress: contractAddr },
+          create: {
+            contractAddress: contractAddr,
+            kind: kindMap[eventType],
+            creator: creatorAddr,
+            deployedAtLedger: ledgerSequence,
+          },
+          update: {
+            creator: creatorAddr,
+            deployedAtLedger: ledgerSequence,
+          },
+        });
+      }
+      break;
+    }
   }
 }

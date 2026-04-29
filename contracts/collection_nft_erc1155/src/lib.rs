@@ -11,6 +11,9 @@ use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, symbol_short, Address, Env, String, Vec,
 };
 
+const TTL_THRESHOLD: u32 = 50_000;
+const TTL_BUMP: u32 = 100_000;
+
 // ─── Errors ──────────────────────────────────────────────────────────────────
 
 #[contracterror]
@@ -82,6 +85,7 @@ impl NormalNFT1155 {
     /// Create a brand new token type, auto-assign the next ID.
     /// Returns the new token_id.
     pub fn mint_new(env: Env, to: Address, amount: u128, uri: String) -> Result<u64, Error> {
+        Self::extend_instance_ttl(&env);
         Self::only_creator(&env)?;
         let token_id: u64 = env
             .storage()
@@ -103,12 +107,14 @@ impl NormalNFT1155 {
         amount: u128,
         uri: String,
     ) -> Result<(), Error> {
+        Self::extend_instance_ttl(&env);
         Self::only_creator(&env)?;
         Self::_mint(&env, &to, token_id, amount, &uri);
         Ok(())
     }
 
     /// Batch-mint multiple token types in one call.
+    /// Optimized to minimize storage I/O.
     pub fn mint_batch(
         env: Env,
         to: Address,
@@ -116,19 +122,79 @@ impl NormalNFT1155 {
         amounts: Vec<u128>,
         uris: Vec<String>,
     ) -> Result<(), Error> {
+        Self::extend_instance_ttl(&env);
         Self::only_creator(&env)?;
+
+        let len = token_ids.len();
+        if len == 0 {
+            return Ok(());
+        }
+
         if token_ids.len() != amounts.len() || token_ids.len() != uris.len() {
             return Err(Error::LengthMismatch);
         }
-        for i in 0..token_ids.len() {
-            Self::_mint(
-                &env,
-                &to,
-                token_ids.get(i).unwrap(),
-                amounts.get(i).unwrap(),
-                &uris.get(i).unwrap(),
-            );
+
+        // Read NextTokenId once
+        let next_token_id = env
+            .storage()
+            .instance()
+            .get(&DataKey::NextTokenId)
+            .unwrap_or(0);
+        let mut max_token_id = next_token_id;
+
+        // Process each token type
+        for i in 0..len {
+            let token_id = token_ids.get(i).unwrap();
+            let amount = amounts.get(i).unwrap();
+            let uri = uris.get(i).unwrap();
+
+            // Track max token ID
+            if token_id >= max_token_id {
+                max_token_id = token_id + 1;
+            }
+
+            // Set URI if this is a new token type
+            if !env.storage().persistent().has(&DataKey::TokenUri(token_id)) {
+                env.storage()
+                    .persistent()
+                    .set(&DataKey::TokenUri(token_id), &uri);
+                env.storage().persistent().extend_ttl(
+                    &DataKey::TokenUri(token_id),
+                    TTL_THRESHOLD,
+                    TTL_BUMP,
+                );
+            }
+
+            // Update balance
+            let balance_key = DataKey::Balance(to.clone(), token_id);
+            let current_balance: u128 = env.storage().persistent().get(&balance_key).unwrap_or(0);
+            let new_balance = current_balance + amount;
+            env.storage().persistent().set(&balance_key, &new_balance);
+            env.storage()
+                .persistent()
+                .extend_ttl(&balance_key, TTL_THRESHOLD, TTL_BUMP);
+
+            // Update total supply
+            let supply_key = DataKey::TotalSupply(token_id);
+            let current_supply: u128 = env.storage().persistent().get(&supply_key).unwrap_or(0);
+            let new_supply = current_supply + amount;
+            env.storage().persistent().set(&supply_key, &new_supply);
+            env.storage()
+                .persistent()
+                .extend_ttl(&supply_key, TTL_THRESHOLD, TTL_BUMP);
+
+            // Emit event
+            env.events()
+                .publish((symbol_short!("mint"), to.clone()), (token_id, amount));
         }
+
+        // Update NextTokenId once at the end if needed
+        if max_token_id > next_token_id {
+            env.storage()
+                .instance()
+                .set(&DataKey::NextTokenId, &max_token_id);
+        }
+
         Ok(())
     }
 
@@ -141,6 +207,7 @@ impl NormalNFT1155 {
         token_id: u64,
         amount: u128,
     ) -> Result<(), Error> {
+        Self::extend_instance_ttl(&env);
         from.require_auth();
         Self::_transfer(&env, &from, &to, token_id, amount)
     }
@@ -154,6 +221,7 @@ impl NormalNFT1155 {
         token_id: u64,
         amount: u128,
     ) -> Result<(), Error> {
+        Self::extend_instance_ttl(&env);
         operator.require_auth();
         if !Self::_is_approved_for_all(&env, &operator, &from) {
             return Err(Error::NotApproved);
@@ -170,6 +238,7 @@ impl NormalNFT1155 {
         token_ids: Vec<u64>,
         amounts: Vec<u128>,
     ) -> Result<(), Error> {
+        Self::extend_instance_ttl(&env);
         spender.require_auth();
 
         // [SECURITY] Allow owner or authorized operator (#48)
@@ -181,13 +250,9 @@ impl NormalNFT1155 {
             return Err(Error::LengthMismatch);
         }
         for i in 0..token_ids.len() {
-            Self::_transfer(
-                &env,
-                &from,
-                &to,
-                token_ids.get(i).unwrap(),
-                amounts.get(i).unwrap(),
-            )?;
+            let id = token_ids.get(i).unwrap();
+            let amount = amounts.get(i).unwrap();
+            Self::_transfer(&env, &from, &to, id, amount)?;
         }
         Ok(())
     }
@@ -195,6 +260,7 @@ impl NormalNFT1155 {
     // ── Approvals ─────────────────────────────────────────────────────────
 
     pub fn set_approval_for_all(env: Env, owner: Address, operator: Address, approved: bool) {
+        Self::extend_instance_ttl(&env);
         owner.require_auth();
         let key = DataKey::ApprovedForAll(owner.clone(), operator.clone());
         env.storage().persistent().set(&key, &approved);
@@ -212,6 +278,7 @@ impl NormalNFT1155 {
         token_id: u64,
         amount: u128,
     ) -> Result<(), Error> {
+        Self::extend_instance_ttl(&env);
         spender.require_auth();
 
         // [SECURITY] Allow owner or authorized operator to burn (#48)
@@ -231,6 +298,11 @@ impl NormalNFT1155 {
         env.storage()
             .persistent()
             .set(&DataKey::Balance(from.clone(), token_id), &(bal - amount));
+        env.storage().persistent().extend_ttl(
+            &DataKey::Balance(from.clone(), token_id),
+            TTL_THRESHOLD,
+            TTL_BUMP,
+        );
 
         let supply: u128 = env
             .storage()
@@ -240,6 +312,11 @@ impl NormalNFT1155 {
         env.storage().persistent().set(
             &DataKey::TotalSupply(token_id),
             &(supply.saturating_sub(amount)),
+        );
+        env.storage().persistent().extend_ttl(
+            &DataKey::TotalSupply(token_id),
+            TTL_THRESHOLD,
+            TTL_BUMP,
         );
 
         env.events()
@@ -258,15 +335,18 @@ impl NormalNFT1155 {
 
     /// Batch balance query — mirrors ERC-1155 `balanceOfBatch`.
     pub fn balance_of_batch(env: Env, accounts: Vec<Address>, token_ids: Vec<u64>) -> Vec<u128> {
+        if accounts.len() != token_ids.len() {
+            return Vec::new(&env);
+        }
+
         let mut result = Vec::new(&env);
         for i in 0..accounts.len() {
+            let account = accounts.get(i).unwrap();
+            let token_id = token_ids.get(i).unwrap();
             let bal: u128 = env
                 .storage()
                 .persistent()
-                .get(&DataKey::Balance(
-                    accounts.get(i).unwrap(),
-                    token_ids.get(i).unwrap(),
-                ))
+                .get(&DataKey::Balance(account.clone(), token_id))
                 .unwrap_or(0);
             result.push_back(bal);
         }
@@ -322,6 +402,7 @@ impl NormalNFT1155 {
     // ── Admin ─────────────────────────────────────────────────────────────
 
     pub fn transfer_ownership(env: Env, new_creator: Address) -> Result<(), Error> {
+        Self::extend_instance_ttl(&env);
         Self::only_creator(&env)?;
         env.storage()
             .instance()
@@ -330,6 +411,7 @@ impl NormalNFT1155 {
     }
 
     pub fn update_royalty(env: Env, receiver: Address, bps: u32) -> Result<(), Error> {
+        Self::extend_instance_ttl(&env);
         Self::only_creator(&env)?;
         env.storage()
             .instance()
@@ -339,6 +421,10 @@ impl NormalNFT1155 {
     }
 
     // ── Private helpers ───────────────────────────────────────────────────
+
+    fn extend_instance_ttl(env: &Env) {
+        env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_BUMP);
+    }
 
     fn only_creator(env: &Env) -> Result<Address, Error> {
         let creator: Address = env
@@ -383,6 +469,11 @@ impl NormalNFT1155 {
         env.storage()
             .persistent()
             .set(&DataKey::TotalSupply(token_id), &(supply + amount));
+        env.storage().persistent().extend_ttl(
+            &DataKey::TotalSupply(token_id),
+            TTL_THRESHOLD,
+            TTL_BUMP,
+        );
 
         env.events()
             .publish((symbol_short!("mint"), to.clone()), (token_id, amount));
@@ -407,6 +498,11 @@ impl NormalNFT1155 {
         env.storage().persistent().set(
             &DataKey::Balance(from.clone(), token_id),
             &(from_bal - amount),
+        );
+        env.storage().persistent().extend_ttl(
+            &DataKey::Balance(from.clone(), token_id),
+            TTL_THRESHOLD,
+            TTL_BUMP,
         );
 
         let to_bal: u128 = env
@@ -437,3 +533,6 @@ impl NormalNFT1155 {
             .unwrap_or(false)
     }
 }
+
+#[cfg(test)]
+mod test;

@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -38,4 +39,15 @@ model MarketplaceEvent {
   data            Json
   ledgerSequence  Int
   ledgerTimestamp DateTime @default(now())
+}
+
+model Collection {
+  id              Int      @id @default(autoincrement())
+  contractAddress String   @unique
+  kind            String   // "normal_721" | "normal_1155" | "lazy_721" | "lazy_1155"
+  creator         String
+  name            String?
+  symbol          String?
+  deployedAtLedger Int
+  createdAt       DateTime @default(now())
 }

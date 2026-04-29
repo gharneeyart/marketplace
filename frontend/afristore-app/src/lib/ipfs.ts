@@ -15,8 +15,6 @@
 import axios from "axios";
 import { config } from "./config";
 
-const PINATA_BASE = "https://api.pinata.cloud";
-
 /** Artwork metadata stored on IPFS */
 export interface ArtworkMetadata {
   title: string;
@@ -25,6 +23,7 @@ export interface ArtworkMetadata {
   /** Must be in the form "ipfs://CID" */
   image: string;
   year: string;
+  category: string;
 }
 
 /** Result of any IPFS upload */
@@ -45,22 +44,13 @@ export async function uploadImageToIPFS(
 ): Promise<IpfsUploadResult> {
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("name", name ?? file.name);
 
-  const metadata = JSON.stringify({ name: name ?? file.name });
-  formData.append("pinataMetadata", metadata);
-
-  const options = JSON.stringify({ cidVersion: 1 });
-  formData.append("pinataOptions", options);
-
-  const res = await axios.post(`${PINATA_BASE}/pinning/pinFileToIPFS`, formData, {
+  const res = await axios.post("/api/ipfs/upload-image", formData, {
     maxBodyLength: Infinity,
-    headers: {
-      Authorization: `Bearer ${config.pinataJwt}`,
-      "Content-Type": "multipart/form-data",
-    },
   });
 
-  const cid: string = res.data.IpfsHash;
+  const cid: string = res.data.cid;
   return {
     cid,
     url: `${config.pinataGateway}/ipfs/${cid}`,
@@ -77,20 +67,12 @@ export async function uploadMetadataToIPFS(
   metadata: ArtworkMetadata,
   name?: string
 ): Promise<IpfsUploadResult> {
-  const body = {
-    pinataContent: metadata,
-    pinataMetadata: { name: name ?? `${metadata.title}-metadata.json` },
-    pinataOptions: { cidVersion: 1 },
-  };
-
-  const res = await axios.post(`${PINATA_BASE}/pinning/pinJSONToIPFS`, body, {
-    headers: {
-      Authorization: `Bearer ${config.pinataJwt}`,
-      "Content-Type": "application/json",
-    },
+  const res = await axios.post("/api/ipfs/upload-metadata", {
+    metadata,
+    name: name ?? `${metadata.title}-metadata.json`,
   });
 
-  const cid: string = res.data.IpfsHash;
+  const cid: string = res.data.cid;
   return {
     cid,
     url: `${config.pinataGateway}/ipfs/${cid}`,

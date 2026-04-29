@@ -11,6 +11,9 @@ use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, symbol_short, Address, Env, String, Vec,
 };
 
+const TTL_THRESHOLD: u32 = 50_000;
+const TTL_BUMP: u32 = 100_000;
+
 // ─── Errors ──────────────────────────────────────────────────────────────────
 
 #[contracterror]
@@ -91,11 +94,19 @@ impl NormalNFT721 {
         Ok(())
     }
 
+    pub fn next_token_id(env: Env) -> u64 {
+        env.storage()
+            .instance()
+            .get(&DataKey::NextTokenId)
+            .unwrap_or(0)
+    }
+
     // ── Minting ───────────────────────────────────────────────────────────
 
     /// Creator mints a single token to `to` with the given metadata URI.
     /// Returns the new token_id.
     pub fn mint(env: Env, to: Address, uri: String) -> Result<u64, Error> {
+        Self::extend_instance_ttl(&env);
         let creator = Self::only_creator(&env)?;
 
         let token_id: u64 = env
@@ -122,25 +133,103 @@ impl NormalNFT721 {
     }
 
     /// Batch mint multiple tokens to the same recipient.
+    /// Optimized to minimize storage I/O - reads storage once, mints in memory, writes back once.
     pub fn batch_mint(env: Env, to: Address, uris: Vec<String>) -> Result<(), Error> {
+        Self::extend_instance_ttl(&env);
         Self::only_creator(&env)?;
-        for uri in uris.iter() {
-            // recursively calls single mint so supply checks stay consistent
-            let token_id: u64 = env
-                .storage()
-                .instance()
-                .get(&DataKey::NextTokenId)
-                .unwrap_or(0);
-            let max: u64 = env
-                .storage()
-                .instance()
-                .get(&DataKey::MaxSupply)
-                .unwrap_or(u64::MAX);
-            if token_id >= max {
-                return Err(Error::MaxSupplyReached);
-            }
-            Self::_do_mint(&env, &to, token_id, &uri);
+
+        let uris_len = uris.len();
+        if uris_len == 0 {
+            return Ok(());
         }
+
+        // Read storage ONCE before the loop
+        let mut next_token_id: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::NextTokenId)
+            .unwrap_or(0);
+        let max_supply: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::MaxSupply)
+            .unwrap_or(u64::MAX);
+        let mut total_supply: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::TotalSupply)
+            .unwrap_or(0);
+
+        // Check if we have enough supply for all tokens
+        if next_token_id + (uris_len as u64) > max_supply {
+            return Err(Error::MaxSupplyReached);
+        }
+
+        // Get current balance once (will be incremented for each mint)
+        let mut current_balance: u64 = env
+            .storage()
+            .persistent()
+            .get(&DataKey::BalanceOf(to.clone()))
+            .unwrap_or(0);
+
+        // Collect token IDs to emit events
+        let mut minted_ids = Vec::new(&env);
+
+        // Mint all tokens in memory first
+        for uri in uris.iter() {
+            let token_id = next_token_id;
+
+            // Store token data
+            env.storage()
+                .persistent()
+                .set(&DataKey::Owner(token_id), &to);
+            env.storage()
+                .persistent()
+                .set(&DataKey::TokenUri(token_id), &uri);
+            env.storage().persistent().extend_ttl(
+                &DataKey::Owner(token_id),
+                TTL_THRESHOLD,
+                TTL_BUMP,
+            );
+            env.storage().persistent().extend_ttl(
+                &DataKey::TokenUri(token_id),
+                TTL_THRESHOLD,
+                TTL_BUMP,
+            );
+
+            minted_ids.push_back(token_id);
+
+            // Increment in memory
+            next_token_id += 1;
+            total_supply += 1;
+            current_balance += 1;
+        }
+
+        // Write back to storage ONCE after the loop
+        env.storage()
+            .instance()
+            .set(&DataKey::NextTokenId, &next_token_id);
+        env.storage()
+            .instance()
+            .set(&DataKey::TotalSupply, &total_supply);
+        env.storage()
+            .persistent()
+            .set(&DataKey::BalanceOf(to.clone()), &current_balance);
+        env.storage().persistent().extend_ttl(
+            &DataKey::BalanceOf(to.clone()),
+            TTL_THRESHOLD,
+            TTL_BUMP,
+        );
+
+        // Emit individual mint events (as per ERC-721 standard)
+        let creator = Self::only_creator(&env)?;
+        for token_id in minted_ids.iter() {
+            env.events().publish(
+                (symbol_short!("mint"), to.clone()),
+                (creator.clone(), token_id),
+            );
+        }
+
         Ok(())
     }
 
@@ -148,6 +237,7 @@ impl NormalNFT721 {
 
     /// Owner transfers their token.
     pub fn transfer(env: Env, from: Address, to: Address, token_id: u64) -> Result<(), Error> {
+        Self::extend_instance_ttl(&env);
         from.require_auth();
         Self::_transfer(&env, &from, &to, token_id)
     }
@@ -160,6 +250,7 @@ impl NormalNFT721 {
         to: Address,
         token_id: u64,
     ) -> Result<(), Error> {
+        Self::extend_instance_ttl(&env);
         spender.require_auth();
         Self::_check_approved(&env, &spender, &from, token_id)?;
         // clear single-token approval on transfer
@@ -177,6 +268,7 @@ impl NormalNFT721 {
         approved: Address,
         token_id: u64,
     ) -> Result<(), Error> {
+        Self::extend_instance_ttl(&env);
         spender.require_auth();
         let owner: Address = env
             .storage()
@@ -203,6 +295,7 @@ impl NormalNFT721 {
     }
 
     pub fn set_approval_for_all(env: Env, owner: Address, operator: Address, approved: bool) {
+        Self::extend_instance_ttl(&env);
         owner.require_auth();
         let key = DataKey::ApprovedForAll(owner.clone(), operator.clone());
         env.storage().persistent().set(&key, &approved);
@@ -214,6 +307,7 @@ impl NormalNFT721 {
     // ── Burn ──────────────────────────────────────────────────────────────
 
     pub fn burn(env: Env, spender: Address, token_id: u64) -> Result<(), Error> {
+        Self::extend_instance_ttl(&env);
         spender.require_auth();
         let owner: Address = env
             .storage()
@@ -232,6 +326,11 @@ impl NormalNFT721 {
         env.storage()
             .persistent()
             .set(&DataKey::BalanceOf(owner.clone()), &(bal.saturating_sub(1)));
+        env.storage().persistent().extend_ttl(
+            &DataKey::BalanceOf(owner.clone()),
+            TTL_THRESHOLD,
+            TTL_BUMP,
+        );
 
         env.storage().persistent().remove(&DataKey::Owner(token_id));
         env.storage()
@@ -333,6 +432,7 @@ impl NormalNFT721 {
     // ── Admin ─────────────────────────────────────────────────────────────
 
     pub fn transfer_ownership(env: Env, new_creator: Address) -> Result<(), Error> {
+        Self::extend_instance_ttl(&env);
         Self::only_creator(&env)?;
         env.storage()
             .instance()
@@ -341,6 +441,7 @@ impl NormalNFT721 {
     }
 
     pub fn update_royalty(env: Env, receiver: Address, bps: u32) -> Result<(), Error> {
+        Self::extend_instance_ttl(&env);
         Self::only_creator(&env)?;
         env.storage()
             .instance()
@@ -350,6 +451,10 @@ impl NormalNFT721 {
     }
 
     // ── Private helpers ───────────────────────────────────────────────────
+
+    fn extend_instance_ttl(env: &Env) {
+        env.storage().instance().extend_ttl(TTL_THRESHOLD, TTL_BUMP);
+    }
 
     fn only_creator(env: &Env) -> Result<Address, Error> {
         let creator: Address = env
@@ -430,6 +535,11 @@ impl NormalNFT721 {
             &DataKey::BalanceOf(from.clone()),
             &(from_bal.saturating_sub(1)),
         );
+        env.storage().persistent().extend_ttl(
+            &DataKey::BalanceOf(from.clone()),
+            TTL_THRESHOLD,
+            TTL_BUMP,
+        );
 
         let to_bal: u64 = env
             .storage()
@@ -446,6 +556,9 @@ impl NormalNFT721 {
         env.storage()
             .persistent()
             .set(&DataKey::Owner(token_id), to);
+        env.storage()
+            .persistent()
+            .extend_ttl(&DataKey::Owner(token_id), TTL_THRESHOLD, TTL_BUMP);
         env.events().publish(
             (symbol_short!("transfer"), from.clone()),
             (to.clone(), token_id),
@@ -481,3 +594,6 @@ impl NormalNFT721 {
         Err(Error::NotApproved)
     }
 }
+
+#[cfg(test)]
+mod test;
