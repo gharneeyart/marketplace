@@ -14,6 +14,8 @@ import { useWalletContext } from "@/context/WalletContext";
 import { useBuyArtwork } from "@/hooks/useMarketplace";
 import { ShoppingCart, User, Calendar, Tag } from "lucide-react";
 import { GuardButton } from "./WalletGuard";
+import posthog from "posthog-js";
+import { CheckoutModal } from "./CheckoutModal";
 
 interface ListingCardProps {
   listing: Listing;
@@ -33,6 +35,7 @@ export function ListingCard({ listing, onPurchased }: ListingCardProps) {
   const [metadata, setMetadata] = useState<ArtworkMetadata | null>(null);
   const [imgError, setImgError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showCheckout, setShowCheckout] = useState(false);
 
   // Resolve metadata from IPFS on mount.
   useEffect(() => {
@@ -48,12 +51,20 @@ export function ListingCard({ listing, onPurchased }: ListingCardProps) {
   const isOwn = publicKey === listing.artist;
 
   const handleBuy = async () => {
-    const success = await buy(listing.listing_id);
-    if (success) onPurchased?.();
+    return await buy(listing.listing_id);
   };
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow">
+    <>
+      <CheckoutModal 
+        isOpen={showCheckout} 
+        onClose={() => setShowCheckout(false)} 
+        listing={listing} 
+        onCryptoPurchase={handleBuy}
+        onPurchased={onPurchased}
+        isBuyingCrypto={isBuying}
+      />
+      <div className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow">
       {/* Image */}
       <Link href={`/listings/${listing.listing_id}`}>
         <div className="relative aspect-square overflow-hidden bg-brand-50">
@@ -125,7 +136,7 @@ export function ListingCard({ listing, onPurchased }: ListingCardProps) {
 
           {listing.status === "Active" && (
             <GuardButton
-              onAction={handleBuy}
+              onAction={() => setShowCheckout(true)}
               disabled={isBuying || isOwn}
               actionName="To purchase this artwork"
               title={isOwn ? "You cannot buy your own listing" : undefined}
@@ -143,5 +154,6 @@ export function ListingCard({ listing, onPurchased }: ListingCardProps) {
         )}
       </div>
     </div>
+    </>
   );
 }

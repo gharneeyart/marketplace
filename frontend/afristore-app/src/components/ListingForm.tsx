@@ -15,6 +15,7 @@ import { Listing, stroopsToXlm } from "@/lib/contract";
 import { DEFAULT_TOKEN } from "@/config/tokens";
 import { useSupportedTokens } from "@/hooks/useSupportedTokens";
 import { ensureTokenOption, getDefaultSupportedToken } from "@/lib/token-support";
+import posthog from "posthog-js";
 
 export const ART_CATEGORIES = [
   "Painting",
@@ -131,6 +132,7 @@ export function ListingForm({ listing, onSuccess, onCancel }: ListingFormProps) 
       const id = await create({ ...form, imageFile: selectedFile });
       if (id !== null) {
         setSuccessId(id);
+        posthog.capture("Listing Created", { listing_id: id, price_xlm: form.price });
         onSuccess?.(id);
       }
     }

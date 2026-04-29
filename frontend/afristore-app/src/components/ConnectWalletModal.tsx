@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { config } from "@/lib/config";
 import { MagicWalletModal } from "./MagicWalletModal";
+import posthog from "posthog-js";
 
 interface ConnectWalletModalProps {
     isOpen: boolean;
@@ -54,6 +55,7 @@ export function ConnectWalletModal({ isOpen, onClose }: ConnectWalletModalProps)
     // Close when connected
     useEffect(() => {
         if (status === "CONNECTED" && hasStartedConnect) {
+            posthog.capture("Wallet Connected");
             const timer = setTimeout(onClose, 1000);
             return () => clearTimeout(timer);
         }
