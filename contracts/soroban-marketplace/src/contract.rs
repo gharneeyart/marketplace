@@ -85,8 +85,7 @@ impl MarketplaceContract {
         }
         crate::storage::set_paused(&env, true);
         #[allow(deprecated)]
-        env.events()
-            .publish((crate::events::CONTRACT_PAUSED,), ());
+        env.events().publish((crate::events::CONTRACT_PAUSED,), ());
     }
 
     pub fn admin_unpause(env: Env, admin: Address) {

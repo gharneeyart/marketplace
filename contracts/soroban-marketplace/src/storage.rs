@@ -296,12 +296,12 @@ pub fn release_auction_lock(env: &Env, auction_id: u64) {
 // ── Pause/Unpause Mechanism ──────────────────────────────────
 
 pub fn set_paused(env: &Env, paused: bool) {
-    env.storage()
-        .persistent()
-        .set(&DataKey::IsPaused, &paused);
-    env.storage()
-        .persistent()
-        .extend_ttl(&DataKey::IsPaused, LEDGER_TTL_THRESHOLD, LEDGER_TTL_BUMP);
+    env.storage().persistent().set(&DataKey::IsPaused, &paused);
+    env.storage().persistent().extend_ttl(
+        &DataKey::IsPaused,
+        LEDGER_TTL_THRESHOLD,
+        LEDGER_TTL_BUMP,
+    );
 }
 
 pub fn is_paused(env: &Env) -> bool {
