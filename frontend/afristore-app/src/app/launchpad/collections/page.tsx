@@ -62,6 +62,7 @@ export default function CollectionsDirectoryPage() {
             <div className="flex gap-2">
               <select
                 value={kindFilter}
+                aria-label="Filter by collection type"
                 onChange={(e) => setKindFilter(e.target.value as any)}
                 className="appearance-none pl-4 pr-10 py-4 rounded-2xl border border-gray-200 bg-white focus:border-brand-500 focus:outline-none transition-all shadow-sm font-inter font-semibold text-gray-700"
               >
