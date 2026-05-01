@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../db.js';
+import { cacheMiddleware } from './cache-middleware.js';
 
 const router = Router();
 
@@ -42,7 +43,8 @@ router.get('/listings/:id/history', async (req: Request, res: Response) => {
 });
 
 // GET /activity/recent — latest sales and listings across the marketplace
-router.get('/activity/recent', async (req: Request, res: Response) => {
+// Cache for 30 seconds to handle traffic spikes
+router.get('/activity/recent', cacheMiddleware(30), async (req: Request, res: Response) => {
     try {
         const results = await prisma.marketplaceEvent.findMany({
             take: 20,
@@ -56,7 +58,8 @@ router.get('/activity/recent', async (req: Request, res: Response) => {
 
 
 // GET /collections — all deployed collections
-router.get('/collections', async (req: Request, res: Response) => {
+// Cache for 60 seconds to handle traffic spikes
+router.get('/collections', cacheMiddleware(60), async (req: Request, res: Response) => {
     const { kind, creator } = req.query;
     try {
         const where: any = {};
