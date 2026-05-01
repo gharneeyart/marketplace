@@ -1,8 +1,8 @@
 extern crate std;
 
 use soroban_sdk::{
-    testutils::{Address as _, Events as _, Ledger as _},
-    Address, Env, String, Symbol, Vec,
+    testutils::{Address as _, Ledger as _},
+    Address, Env, String, Vec,
 };
 
 use crate::{DataKey, NormalNFT1155, NormalNFT1155Client};

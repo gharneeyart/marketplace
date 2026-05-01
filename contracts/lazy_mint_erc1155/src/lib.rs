@@ -603,7 +603,7 @@ impl LazyMint1155 {
         #[allow(deprecated)]
         env.events().publish(
             (
-                Symbol::new(&env, "TransferSingle"),
+                Symbol::new(env, "TransferSingle"),
                 operator.clone(),
                 from.clone(),
                 to.clone(),
@@ -655,7 +655,7 @@ impl LazyMint1155 {
         #[allow(deprecated)]
         env.events().publish(
             (
-                Symbol::new(&env, "TransferSingle"),
+                Symbol::new(env, "TransferSingle"),
                 from.clone(),
                 to.clone(),
             ),

@@ -1,5 +1,3 @@
-#![cfg(test)]
-
 use soroban_sdk::{testutils::Address as _, Address, BytesN, Env, String};
 
 use crate::{DataKey, Error, LazyMint721, LazyMint721Client};
@@ -152,7 +150,7 @@ fn test_signature_for_wrong_voucher_data_returns_proper_error() {
     let currency = Address::generate(&env);
 
     // Create original voucher
-    let original_voucher = crate::MintVoucher {
+    let _original_voucher = crate::MintVoucher {
         token_id: 3,
         price: 300,
         currency: currency.clone(),

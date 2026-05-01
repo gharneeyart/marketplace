@@ -536,5 +536,4 @@ fn test_lazy_mint_erc1155_events_emit_successfully() {
     // For now, we verify the contract compiles and basic functions work
 
     // If we reach here, the contract is working and events are being emitted
-    assert!(true); // Simple assertion to indicate success
 }

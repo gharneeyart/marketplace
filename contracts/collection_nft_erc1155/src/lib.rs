@@ -499,7 +499,7 @@ impl NormalNFT1155 {
 
         // Emit TransferSingle event for mint (from zero address)
         env.events().publish(
-            (Symbol::new(&env, "TransferSingle"), to.clone(), to.clone()),
+            (Symbol::new(env, "TransferSingle"), to.clone(), to.clone()),
             (token_id, amount),
         );
     }
@@ -548,7 +548,7 @@ impl NormalNFT1155 {
         // Emit TransferSingle event with operator (ERC-1155 standard)
         env.events().publish(
             (
-                Symbol::new(&env, "TransferSingle"),
+                Symbol::new(env, "TransferSingle"),
                 operator.clone(),
                 from.clone(),
                 to.clone(),
@@ -601,7 +601,7 @@ impl NormalNFT1155 {
         // Emit TransferSingle event (ERC-1155 standard) - operator is from for direct transfers
         env.events().publish(
             (
-                Symbol::new(&env, "TransferSingle"),
+                Symbol::new(env, "TransferSingle"),
                 from.clone(),
                 to.clone(),
             ),
