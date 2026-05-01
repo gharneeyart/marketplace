@@ -7,7 +7,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useWalletContext } from "@/context/WalletContext";
-import { Wallet, Store, LayoutDashboard, Menu, X, AlertTriangle, LogOut, ShieldCheck, Tag, Inbox, Compass, User, Gavel, Rocket } from "lucide-react";
+import { Wallet, Store, LayoutDashboard, Menu, X, AlertTriangle, LogOut, ShieldCheck, Tag, Inbox, Compass, User, Gavel, Settings, HelpCircle } from "lucide-react";
 import { ConnectWalletModal } from "./ConnectWalletModal";
 
 export function Navbar() {
@@ -116,6 +116,20 @@ export function Navbar() {
                 Offer Inbox
               </Link>
             )}
+            <Link
+              href="/settings"
+              className="flex items-center gap-1.5 text-white/70 hover:text-brand-400 transition-colors duration-300"
+            >
+              <Settings size={16} />
+              Settings
+            </Link>
+            <Link
+              href="/help"
+              className="flex items-center gap-1.5 text-white/70 hover:text-brand-400 transition-colors duration-300"
+            >
+              <HelpCircle size={16} />
+              Help
+            </Link>
           </div>
 
 
@@ -251,6 +265,22 @@ export function Navbar() {
                   Offer Inbox
                 </Link>
               )}
+              <Link
+                href="/settings"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 text-white/80 hover:text-brand-400 transition-colors text-lg font-display"
+              >
+                <Settings size={20} className="text-gray-400" />
+                Settings
+              </Link>
+              <Link
+                href="/help"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 text-white/80 hover:text-brand-400 transition-colors text-lg font-display"
+              >
+                <HelpCircle size={20} className="text-gray-400" />
+                Help
+              </Link>
             </div>
 
             <div className="pt-6 border-t border-white/5">

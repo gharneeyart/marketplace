@@ -40,7 +40,8 @@ describe('Regression Test: Invalid Listing IDs', () => {
       expect(screen.getByRole('heading', { name: /Artwork Not Found/i })).toBeInTheDocument()
     })
     
-    expect(screen.getByText(/Artwork not found on-chain/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Artwork Not Found/i })).toBeInTheDocument()
+    expect(screen.getByText(/Artwork not found/i, { selector: 'p' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Return to Marketplace/i })).toBeInTheDocument()
   })
 })
