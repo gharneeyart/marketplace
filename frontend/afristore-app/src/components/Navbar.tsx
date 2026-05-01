@@ -73,6 +73,13 @@ export function Navbar() {
               <Gavel size={16} />
               Auctions
             </Link>
+            <Link
+              href="/launchpad"
+              className="flex items-center gap-1.5 text-white/70 hover:text-brand-400 transition-colors duration-300"
+            >
+              <Rocket size={16} />
+              Launchpad
+            </Link>
             {isConnected && (
               <>
                 <Link
@@ -209,6 +216,14 @@ export function Navbar() {
               >
                 <Gavel size={20} className="text-brand-500" />
                 Auctions
+              </Link>
+              <Link
+                href="/launchpad"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 text-white/80 hover:text-brand-400 transition-colors text-lg font-display"
+              >
+                <Rocket size={20} className="text-brand-500" />
+                Launchpad
               </Link>
               {isConnected && (
                 <>

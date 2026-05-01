@@ -88,7 +88,7 @@ router.get('/creators/:address/collections', async (req: Request, res: Response)
 
 // GET /wallets/:address/activity — events relevant to a Stellar account
 router.get('/wallets/:address/activity', async (req: Request, res: Response) => {
-    const { address } = req.params;
+    const address = req.params.address as string;
     const take = Math.min(parseInt(String(req.query.limit || '50'), 10) || 50, 200);
     try {
         const jsonKeys = ['buyer', 'artist', 'offerer', 'bidder', 'winner', 'creator'];
