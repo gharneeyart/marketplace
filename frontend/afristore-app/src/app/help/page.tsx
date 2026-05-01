@@ -316,7 +316,7 @@ export default function HelpPage() {
                 <AlertTriangle className="h-4 w-4 text-terracotta-400" />
                 <span className="font-medium text-white">Connection Failed</span>
               </div>
-              <p className="text-sm text-gray-400 mb-3">Wallet won't connect or keeps disconnecting</p>
+              <p className="text-sm text-gray-400 mb-3">Wallet won&apos;t connect or keeps disconnecting</p>
               <ul className="text-xs text-gray-500 space-y-1">
                 <li>• Check if wallet extension is enabled</li>
                 <li>• Try refreshing the page</li>
@@ -346,7 +346,7 @@ export default function HelpPage() {
               </div>
               <p className="text-sm text-gray-400 mb-3">Wallet connected to wrong network</p>
               <ul className="text-xs text-gray-500 space-y-1">
-                <li>• Click the "Wrong Network" alert</li>
+                <li>• Click the &quot;Wrong Network&quot; alert</li>
                 <li>• Go to Settings to switch networks</li>
                 <li>• Ensure wallet supports network switching</li>
                 <li>• Contact support if issue persists</li>
@@ -374,7 +374,7 @@ export default function HelpPage() {
           <h2 className="text-xl font-semibold text-white mb-4">Still Need Help?</h2>
           <div className="bg-midnight-900 border border-white/5 rounded-xl p-6">
             <p className="text-gray-400 mb-6">
-              Can't find what you're looking for? Our support team is here to help you with any issues or questions.
+              Can&apos;t find what you&apos;re looking for? Our support team is here to help you with any issues or questions.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {contactMethods.map((method, index) => (
@@ -494,14 +494,14 @@ export default function HelpPage() {
             <h3 className="text-lg font-semibold text-white">New to Stellar? Try Testnet First!</h3>
           </div>
           <p className="text-gray-400 mb-4">
-            Testnet is a safe environment where you can experiment with Afristore using fake tokens. It's perfect for learning how the platform works without risking real money.
+            Testnet is a safe environment where you can experiment with Afristore using fake tokens. It&apos;s perfect for learning how the platform works without risking real money.
           </p>
           
           <div className="space-y-4 mb-6">
             <div className="bg-white/5 rounded-lg p-4">
               <h4 className="font-medium text-white mb-2">Getting Started with Testnet</h4>
               <ol className="text-sm text-gray-400 space-y-2 list-decimal list-inside">
-                <li>Go to Settings and switch to "Stellar Testnet"</li>
+                <li>Go to Settings and switch to &quot;Stellar Testnet&quot;</li>
                 <li>Get free testnet XLM from the Stellar Laboratory</li>
                 <li>Connect your wallet to Afristore</li>
                 <li>Explore the marketplace and test features</li>

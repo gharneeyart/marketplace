@@ -21,8 +21,8 @@
 #![allow(clippy::too_many_arguments, deprecated)]
 
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, symbol_short, panic_with_error, token::Client as TokenClient, Address, Bytes, BytesN, Env, String,
-    Vec, xdr::ToXdr,
+    contract, contracterror, contractimpl, contracttype, panic_with_error, symbol_short,
+    token::Client as TokenClient, xdr::ToXdr, Address, Bytes, BytesN, Env, String, Vec,
 };
 
 const TTL_THRESHOLD: u32 = 50_000;

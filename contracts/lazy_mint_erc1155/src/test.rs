@@ -4,10 +4,9 @@
 use crate::{Error, LazyMint1155, LazyMint1155Client, MintVoucher1155};
 use ed25519_dalek::{Signer, SigningKey};
 use soroban_sdk::{
-    testutils::{Address as _, Ledger as _, Events as _},
+    testutils::{Address as _, Events as _, Ledger as _},
     Address, BytesN, Env, String, Vec,
 };
-
 
 fn jump_ledger(env: &Env, delta: u32) {
     env.ledger().with_mut(|li| {
@@ -264,7 +263,7 @@ fn test_invalid_signature_returns_proper_error() {
 
     let creator = Address::generate(&env);
     let creator_pubkey = BytesN::from_array(&env, &[1u8; 32]); // Non-zero pubkey
-    
+
     // Initialize contract
     client.initialize(
         &creator,
@@ -273,13 +272,13 @@ fn test_invalid_signature_returns_proper_error() {
         &500u32,
         &Address::generate(&env),
     );
-    
+
     let buyer = Address::generate(&env);
     let token_id = 1u64;
-    
+
     // Register edition
     client.register_edition(&token_id, &1000u128);
-    
+
     // Create a voucher with valid data
     let voucher = crate::MintVoucher1155 {
         token_id,
@@ -312,7 +311,7 @@ fn test_wrong_signature_format_returns_proper_error() {
 
     let creator = Address::generate(&env);
     let creator_pubkey = BytesN::from_array(&env, &[2u8; 32]);
-    
+
     // Initialize contract
     client.initialize(
         &creator,
@@ -321,13 +320,13 @@ fn test_wrong_signature_format_returns_proper_error() {
         &500u32,
         &Address::generate(&env),
     );
-    
+
     let buyer = Address::generate(&env);
     let token_id = 2u64;
-    
+
     // Register edition
     client.register_edition(&token_id, &1000u128);
-    
+
     // Create a voucher
     let voucher = crate::MintVoucher1155 {
         token_id,
@@ -360,7 +359,7 @@ fn test_signature_for_wrong_voucher_data_returns_proper_error() {
 
     let creator = Address::generate(&env);
     let creator_pubkey = BytesN::from_array(&env, &[3u8; 32]);
-    
+
     // Initialize contract
     client.initialize(
         &creator,
@@ -369,13 +368,13 @@ fn test_signature_for_wrong_voucher_data_returns_proper_error() {
         &500u32,
         &Address::generate(&env),
     );
-    
+
     let buyer = Address::generate(&env);
     let token_id = 3u64;
-    
+
     // Register edition
     client.register_edition(&token_id, &1000u128);
-    
+
     // Create original voucher
     let original_voucher = crate::MintVoucher1155 {
         token_id,
@@ -420,7 +419,7 @@ fn test_graceful_signature_error_handling_with_payment() {
 
     let creator = Address::generate(&env);
     let creator_pubkey = BytesN::from_array(&env, &[4u8; 32]);
-    
+
     // Initialize contract
     client.initialize(
         &creator,
@@ -429,13 +428,13 @@ fn test_graceful_signature_error_handling_with_payment() {
         &500u32,
         &Address::generate(&env),
     );
-    
+
     let buyer = Address::generate(&env);
     let token_id = 4u64;
-    
+
     // Register edition
     client.register_edition(&token_id, &1000u128);
-    
+
     // Create a voucher with non-zero price
     let voucher = crate::MintVoucher1155 {
         token_id,
@@ -468,7 +467,7 @@ fn test_signature_error_with_maximum_quota() {
 
     let creator = Address::generate(&env);
     let creator_pubkey = BytesN::from_array(&env, &[5u8; 32]);
-    
+
     // Initialize contract
     client.initialize(
         &creator,
@@ -477,13 +476,13 @@ fn test_signature_error_with_maximum_quota() {
         &500u32,
         &Address::generate(&env),
     );
-    
+
     let buyer = Address::generate(&env);
     let token_id = 5u64;
-    
+
     // Register edition
     client.register_edition(&token_id, &1000u128);
-    
+
     // Create a voucher with maximum quota
     let voucher = crate::MintVoucher1155 {
         token_id,
@@ -516,7 +515,7 @@ fn test_lazy_mint_erc1155_events_emit_successfully() {
 
     let creator = Address::generate(&env);
     let creator_pubkey = creator_signing_key();
-    
+
     // Initialize contract
     client.initialize(
         &creator,
@@ -525,17 +524,17 @@ fn test_lazy_mint_erc1155_events_emit_successfully() {
         &500u32,
         &Address::generate(&env),
     );
-    
+
     let buyer = Address::generate(&env);
     let token_id = 1u64;
-    
+
     // Register edition
     client.register_edition(&token_id, &1000u128);
-    
+
     // Test that operations complete successfully (events are emitted internally)
     // Note: Full testing would require voucher creation and signing
     // For now, we verify the contract compiles and basic functions work
-    
+
     // If we reach here, the contract is working and events are being emitted
     assert!(true); // Simple assertion to indicate success
 }
