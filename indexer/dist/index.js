@@ -8,11 +8,14 @@ const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const routes_js_1 = __importDefault(require("./api/routes.js"));
 const poller_js_1 = require("./poller.js");
+const rate_limit_middleware_js_1 = require("./api/rate-limit-middleware.js");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 4000;
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
+// Apply rate limiting to all routes
+app.use(rate_limit_middleware_js_1.rateLimiter);
 // API Routes
 app.use('/', routes_js_1.default);
 // Health check
